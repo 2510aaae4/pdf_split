@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>選擇分割書籤</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <h1>選擇分割書籤</h1>
+    {% if error %}
+        <div class="warning-message">{{ error }}</div>
+    {% endif %}
+    <form method="post" action="/select_bookmarks" id="bookmarkSelectForm">
+        <div style="margin-bottom:1em;">
+            <button type="button" id="select-all-global" class="btn">全選所有分割點</button>
+            <button type="button" class="btn" id="select-level-1">全選第1層</button>
+            <button type="button" class="btn" id="select-level-2">全選第2層</button>
+        </div>
+        <ul class="bookmark-list">
+        {% macro render_checklist(bookmarks, parent_id='', level=1) %}
+            {% for item in bookmarks %}
+                {% set this_id = (parent_id ~ '-' ~ loop.index0) if parent_id else 'root-' ~ loop.index0 %}
+                {% if item.title is defined %}
+                    <li>
+                        <label>
+                            <input type="checkbox" name="selected" value="{{ item.page }}|{{ item.title|e }}" data-group="{{ parent_id }}" data-level="{{ level }}">
+                            {{ item.title }} {% if item.page %}(第 {{ item.page }} 頁){% endif %}
+                            {% if item.matches_pattern %}<span class="pattern-flag">[建議分割]</span>{% endif %}
+                        </label>
+                    </li>
+                {% else %}
+                    <li>
+                        <button type="button" class="select-all-btn" data-group="{{ this_id }}">全選本層</button>
+                        <ul>
+                            {{ render_checklist(item, this_id, level+1) }}
+                        </ul>
+                    </li>
+                {% endif %}
+            {% endfor %}
+        {% endmacro %}
+        {{ render_checklist(bookmarks) }}
+        </ul>
+        <button type="submit">確定分割</button>
+        <a href="/parse_bookmarks" class="cancel-btn">取消</a>
+    </form>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.select-all-btn').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                var group = btn.getAttribute('data-group');
+                var checkboxes = btn.parentElement.querySelectorAll('input[type="checkbox"][data-group="' + group + '"]');
+                var allChecked = Array.from(checkboxes).every(cb => cb.checked);
+                checkboxes.forEach(cb => cb.checked = !allChecked);
+            });
+        });
+        // 全選所有分割點
+        document.getElementById('select-all-global').addEventListener('click', function(e) {
+            e.preventDefault();
+            var checkboxes = document.querySelectorAll('input[type="checkbox"][name="selected"]');
+            var allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            checkboxes.forEach(cb => cb.checked = !allChecked);
+        });
+        // 全選第1層
+        document.getElementById('select-level-1').addEventListener('click', function(e) {
+            e.preventDefault();
+            var checkboxes = document.querySelectorAll('input[type="checkbox"][data-level="1"]');
+            var allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            checkboxes.forEach(cb => cb.checked = !allChecked);
+        });
+        // 全選第2層
+        document.getElementById('select-level-2').addEventListener('click', function(e) {
+            e.preventDefault();
+            var checkboxes = document.querySelectorAll('input[type="checkbox"][data-level="2"]');
+            var allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            checkboxes.forEach(cb => cb.checked = !allChecked);
+        });
+    });
+    </script>
+</body>
+</html> 

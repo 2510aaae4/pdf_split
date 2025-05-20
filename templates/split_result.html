@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>PDF 分割結果</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <h1>PDF 分割結果</h1>
+    {% if files %}
+        <ul>
+        {% for f in files %}
+            <li>
+                <a href="/download_split/{{ loop.index0 }}">下載分割檔案 {{ loop.index }}</a>
+                <span style="font-size:0.9em;color:#888">({{ f.split('/')[-1] }})</span>
+            </li>
+        {% endfor %}
+        </ul>
+        {% if zip_filename %}
+            <p><a href="/download/{{ zip_filename }}" class="zip-download">下載全部分割檔案（ZIP）</a></p>
+        {% endif %}
+    {% else %}
+        <div class="warning-message">找不到分割檔案</div>
+    {% endif %}
+    <a href="/">回首頁</a>
+</body>
+</html> 

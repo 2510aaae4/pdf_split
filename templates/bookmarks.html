@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>PDF 書籤解析結果</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <h1>PDF 書籤解析結果</h1>
+    <p>檔案：{{ fileinfo.original_filename }}，大小：{{ fileinfo.file_size }} bytes</p>
+    <p>狀態：{{ status.status }}
+    {% if status.count %}，共 {{ status.count }} 筆書籤{% endif %}
+    {% if status.match_count is defined %}，符合分割規則：{{ status.match_count }} 筆{% endif %}
+    {% if status.error %}，錯誤：{{ status.error }}{% endif %}
+    </p>
+    {% if status.match_count == 0 %}
+        <div class="warning-message">⚠️ 無任何書籤符合分割規則，請檢查書籤命名或手動選擇。</div>
+    {% endif %}
+    <ul>
+    {% macro render_bookmarks(bookmarks) %}
+        {% for item in bookmarks %}
+            {% if item.title is defined %}
+                <li{% if item.matches_pattern %} class="matched-bookmark"{% endif %}>
+                    {{ item.title }} {% if item.page %}(第 {{ item.page }} 頁){% endif %}
+                    {% if item.matches_pattern %}<span class="pattern-flag">[符合規則]</span>{% endif %}
+                    {% if item.error %}<span style="color:red">[錯誤: {{ item.error }}]</span>{% endif %}
+                </li>
+            {% else %}
+                <ul>{{ render_bookmarks(item) }}</ul>
+            {% endif %}
+        {% endfor %}
+    {% endmacro %}
+    {{ render_bookmarks(bookmarks) }}
+    </ul>
+    <a href="/select_bookmarks" class="btn">選擇分割點並開始分割</a>
+    <a href="/" class="cancel-btn">回首頁</a>
+</body>
+</html> 
