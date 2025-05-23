@@ -1,0 +1,59 @@
+# Task ID: 2
+# Title: Implement PDF upload functionality
+# Status: done
+# Dependencies: 1
+# Priority: high
+# Description: Create the file upload interface and backend route to handle PDF file uploads and validation.
+# Details:
+1. Create index.html template with a file upload form
+2. Style the form with basic CSS
+3. Implement the '/' route to render the upload form
+4. Create '/upload' POST route that:
+   - Validates the uploaded file is a PDF
+   - Saves the file to a temporary location using tempfile
+   - Stores file information in the session
+5. Add basic client-side validation for file type
+6. Implement error handling for invalid uploads
+
+# Test Strategy:
+Test uploading valid PDF files of various sizes. Verify rejection of non-PDF files. Confirm uploaded files are correctly saved to temporary location and session data is properly stored.
+
+# Subtasks:
+## 1. Create PDF upload frontend interface [done]
+### Dependencies: None
+### Description: Implement the HTML form for PDF uploads with client-side validation and styling
+### Details:
+1. Create index.html template with a file upload form that includes:
+   - File input with 'accept="application/pdf"' attribute
+   - Submit button
+   - Form action pointing to '/upload' with method='POST' and enctype='multipart/form-data'
+2. Add client-side JavaScript validation to check file extension and display error messages
+3. Style the form with CSS to provide visual feedback for valid/invalid selections
+4. Implement the '/' route in the backend to render this template
+
+## 2. Implement PDF validation and storage backend [done]
+### Dependencies: 2.1
+### Description: Create the server-side route to handle PDF uploads with proper validation
+### Details:
+1. Create '/upload' POST route handler
+2. Implement file validation logic to verify:
+   - File exists in the request
+   - File has PDF MIME type ('application/pdf')
+   - File size is within acceptable limits
+3. Use Python's tempfile module to create a secure temporary location for storing uploaded PDFs
+4. Return appropriate error responses for invalid uploads with status codes and messages
+
+## 3. Implement session management for uploaded files [done]
+### Dependencies: 2.2
+### Description: Store file information in the session and handle the upload workflow
+### Details:
+1. After successful validation and temporary storage, extract and store key file metadata:
+   - Original filename
+   - Temporary file path
+   - Upload timestamp
+   - File size
+2. Store this information in the user's session
+3. Implement a success response that redirects to the next step in the workflow
+4. Add cleanup logic to remove temporary files when they're no longer needed
+5. Implement error handling for session storage failures
+

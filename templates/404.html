@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - 找不到頁面 | PDF 分割工具</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>PDF 分割工具</h1>
+            <p>根據書籤結構將 PDF 檔案分割成多個較小的檔案</p>
+        </header>
+        
+        <main>
+            <div class="error-section">
+                <div class="error-icon">🔍</div>
+                <h2>404 - 找不到頁面</h2>
+                <p class="error-message">
+                    抱歉，您要尋找的頁面不存在。
+                </p>
+                <p class="error-description">
+                    可能的原因：
+                </p>
+                <ul class="error-reasons">
+                    <li>網址輸入錯誤</li>
+                    <li>頁面已被移動或刪除</li>
+                    <li>連結已過期</li>
+                </ul>
+                
+                <div class="error-actions">
+                    <a href="{{ url_for('index') }}" class="btn btn-upload">
+                        <span class="btn-icon">🏠</span>
+                        回到首頁
+                    </a>
+                    <button onclick="history.back()" class="btn btn-secondary">
+                        <span class="btn-icon">⬅️</span>
+                        返回上一頁
+                    </button>
+                </div>
+            </div>
+        </main>
+        
+        <footer>
+            <p>&copy; 2024 PDF 分割工具</p>
+        </footer>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html> 

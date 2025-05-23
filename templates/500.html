@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>500 - 伺服器錯誤 | PDF 分割工具</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>PDF 分割工具</h1>
+            <p>根據書籤結構將 PDF 檔案分割成多個較小的檔案</p>
+        </header>
+        
+        <main>
+            <div class="error-section">
+                <div class="error-icon">⚠️</div>
+                <h2>500 - 伺服器內部錯誤</h2>
+                <p class="error-message">
+                    抱歉，伺服器遇到了一個內部錯誤，無法完成您的請求。
+                </p>
+                <p class="error-description">
+                    我們已經記錄了這個錯誤，並會盡快修復。
+                </p>
+                
+                <div class="error-tips">
+                    <h3>您可以嘗試：</h3>
+                    <ul class="error-reasons">
+                        <li>重新整理頁面</li>
+                        <li>稍後再試</li>
+                        <li>檢查您的 PDF 檔案是否有損壞</li>
+                        <li>如果問題持續發生，請聯繫技術支援</li>
+                    </ul>
+                </div>
+                
+                <div class="error-actions">
+                    <a href="{{ url_for('index') }}" class="btn btn-upload">
+                        <span class="btn-icon">🏠</span>
+                        回到首頁
+                    </a>
+                    <button onclick="location.reload()" class="btn btn-secondary">
+                        <span class="btn-icon">🔄</span>
+                        重新整理
+                    </button>
+                </div>
+            </div>
+        </main>
+        
+        <footer>
+            <p>&copy; 2024 PDF 分割工具</p>
+        </footer>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html> 

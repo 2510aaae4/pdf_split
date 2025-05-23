@@ -1,0 +1,67 @@
+# Task ID: 5
+# Title: Create bookmark selection interface
+# Status: done
+# Dependencies: 4
+# Priority: medium
+# Description: Develop the UI and backend route for displaying filtered bookmarks and allowing users to select split points.
+# Details:
+1. Create select_bookmarks.html template with:
+   - Display of filtered bookmarks as a checklist
+   - Checkboxes for selection
+   - Submit button to proceed with splitting
+2. Implement '/select_bookmarks' GET route that:
+   - Retrieves parsed bookmarks from session
+   - Renders the template with bookmark data
+3. Implement '/select_bookmarks' POST route that:
+   - Receives selected bookmark IDs/page numbers
+   - Stores selections in session for the splitting process
+4. Add basic styling for the selection interface
+5. Include error handling for cases with no bookmarks
+
+# Test Strategy:
+Verify bookmarks are correctly displayed with checkboxes. Test selection of various combinations of bookmarks. Confirm form submission correctly captures selected bookmarks and stores them in session.
+
+# Subtasks:
+## 1. Create bookmark selection template and styling [done]
+### Dependencies: None
+### Description: Develop the HTML template for displaying filtered bookmarks with selection checkboxes and apply basic styling
+### Details:
+1. Create select_bookmarks.html template with:
+   - Header and page title
+   - Form element with POST method
+   - Table or list to display bookmark information
+   - Checkbox for each bookmark with unique ID
+   - Submit button to proceed with splitting
+   - Cancel button to return to previous page
+2. Add CSS styling for:
+   - Consistent layout and spacing
+   - Checkbox and label alignment
+   - Responsive design for different screen sizes
+   - Visual indication of selected items
+3. Include error message section for displaying when no bookmarks are available
+
+## 2. Implement GET route for bookmark selection page [done]
+### Dependencies: 5.1
+### Description: Create the backend route to retrieve bookmark data and render the selection template
+### Details:
+1. Create a route handler for GET requests to '/select_bookmarks'
+2. Retrieve parsed bookmarks from the session storage
+3. Check if bookmarks exist and have the expected format
+4. If no bookmarks are found, redirect to appropriate error page or previous step
+5. Organize bookmark data for template rendering (e.g., sorting by page number)
+6. Render the select_bookmarks.html template with the bookmark data
+7. Pass any relevant flash messages or errors to the template
+
+## 3. Implement POST route for processing bookmark selections [done]
+### Dependencies: 5.1, 5.2
+### Description: Create the backend route to handle user selections and store them for the splitting process
+### Details:
+1. Create a route handler for POST requests to '/select_bookmarks'
+2. Extract selected bookmark IDs/page numbers from form submission
+3. Validate that at least one bookmark is selected
+4. If validation fails, redirect back to selection page with error message
+5. Store the selected bookmarks in the session for use in the splitting process
+6. Implement error handling for unexpected form data
+7. Redirect to the next step in the workflow (likely the actual PDF splitting page)
+8. Ensure proper CSRF protection for the form submission
+

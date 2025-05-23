@@ -1,0 +1,36 @@
+# Task ID: 8
+# Title: Implement temporary file cleanup
+# Status: done
+# Dependencies: 7
+# Priority: medium
+# Description: Create mechanisms to clean up temporary files (uploaded PDFs, split PDFs, and ZIP files) after processing or on errors.
+# Details:
+1. Implement cleanup function using tempfile.TemporaryDirectory for managing file lifecycle
+2. Add Flask's after_this_request decorator to clean up files after download
+3. Implement error handlers that ensure cleanup on exceptions
+4. Add cleanup for abandoned uploads (optional for MVP)
+5. Ensure proper handling of file permissions during cleanup
+6. Add logging for cleanup operations
+
+# Test Strategy:
+Verify temporary files are correctly removed after successful download. Confirm cleanup occurs after errors or exceptions. Check for any file permission issues during cleanup.
+
+# Subtasks:
+## 1. Implement core file cleanup mechanism [done]
+### Dependencies: None
+### Description: Create a central cleanup utility that manages temporary file lifecycle using tempfile.TemporaryDirectory and handles proper file permissions during deletion.
+### Details:
+Create a utility module (e.g., file_cleanup.py) with functions to: 1) Create temporary directories using tempfile.TemporaryDirectory, 2) Track created files with their paths and contexts, 3) Implement safe deletion with proper error handling for permission issues, 4) Add logging for cleanup operations. The module should expose functions like create_temp_dir(), register_temp_file(), and cleanup_files() that other parts of the application can use.
+
+## 2. Implement request-based cleanup with decorators [done]
+### Dependencies: 8.1
+### Description: Add Flask's after_this_request decorator to ensure temporary files are cleaned up after response delivery, and implement error handlers for exception cases.
+### Details:
+Create decorator functions that utilize the core cleanup mechanism from subtask 1. Implement: 1) A function that uses Flask's after_this_request to register cleanup callbacks, 2) Error handlers that catch exceptions and ensure cleanup runs, 3) Integration with Flask's error handling system. These decorators should be applicable to route functions that create temporary files, ensuring cleanup happens regardless of success or failure.
+
+## 3. Implement abandoned file cleanup [done]
+### Dependencies: 8.1, 8.2
+### Description: Create a mechanism to identify and clean up temporary files that were created but never processed or downloaded.
+### Details:
+Build on the previous subtasks to implement: 1) A tracking system that records creation time of temporary files, 2) A background task or scheduled job that periodically checks for abandoned files based on age, 3) Configuration options for retention periods (how long to keep files before considering them abandoned), 4) Integration with the logging system to record cleanup of abandoned files. This can be implemented using a simple scheduled task or a more robust solution like Celery depending on application requirements.
+

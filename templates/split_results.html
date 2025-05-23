@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分割結果 | PDF 分割工具</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>PDF 分割工具</h1>
+            <p>分割完成</p>
+        </header>
+        
+        <!-- Flash 訊息顯示區域 -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message flash-{{ category }}">
+                            <span class="flash-text">{{ message }}</span>
+                            <button type="button" class="flash-close" onclick="this.parentElement.remove()">&times;</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        <main>
+            <!-- 分割成功訊息 -->
+            <div class="success-summary">
+                <div class="success-icon">✅</div>
+                <h2>PDF 分割成功！</h2>
+                <p>您的 PDF 檔案已成功分割為 {{ split_result.total_parts }} 個檔案</p>
+            </div>
+            
+            <!-- 分割摘要 -->
+            <div class="split-summary-card">
+                <h3>分割摘要</h3>
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <span class="summary-label">原始檔案：</span>
+                        <span class="summary-value">{{ split_result.original_info.filename }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">原始頁數：</span>
+                        <span class="summary-value">{{ split_result.original_info.total_pages }} 頁</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">原始檔案大小：</span>
+                        <span class="summary-value">{{ split_result.original_info.size_mb }} MB</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">分割檔案數量：</span>
+                        <span class="summary-value">{{ split_result.total_parts }} 個檔案</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">總輸出大小：</span>
+                        <span class="summary-value">{{ "%.2f"|format(split_result.split_summary.total_output_size / 1024 / 1024) }} MB</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">處理時間：</span>
+                        <span class="summary-value">{{ "%.2f"|format(split_result.processing_time) }} 秒</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 批量下載區域 -->
+            <div class="download-actions">
+                <h3>下載選項</h3>
+                <div class="action-buttons">
+                    {% if zip_result and zip_result.success %}
+                    <!-- ZIP 下載可用 -->
+                    <button type="button" class="btn btn-primary btn-large" onclick="downloadZipFile()">
+                        <span class="btn-icon">📦</span>
+                        下載全部檔案 (ZIP - {{ zip_result.zip_size_mb }} MB)
+                    </button>
+                    <div class="zip-info">
+                        <small>✅ ZIP 檔案已準備就緒，包含 {{ zip_result.total_files }} 個檔案，壓縮率 {{ zip_result.compression_ratio }}%</small>
+                    </div>
+                    {% elif zip_result %}
+                    <!-- ZIP 創建失敗 -->
+                    <button type="button" class="btn btn-secondary btn-large" disabled>
+                        <span class="btn-icon">❌</span>
+                        ZIP 檔案創建失敗
+                    </button>
+                    <div class="zip-info">
+                        <small>⚠️ 無法創建 ZIP 檔案，請使用下方的個別檔案下載</small>
+                    </div>
+                    {% else %}
+                    <!-- ZIP 功能不可用 -->
+                    <button type="button" class="btn btn-secondary btn-large" disabled>
+                        <span class="btn-icon">📦</span>
+                        ZIP 下載不可用
+                    </button>
+                    <div class="zip-info">
+                        <small>⚠️ ZIP 功能暫時不可用，請使用下方的個別檔案下載</small>
+                    </div>
+                    {% endif %}
+                    
+                    <button type="button" class="btn btn-secondary" data-redirect="{{ url_for('index') }}">
+                        <span class="btn-icon">🔄</span>
+                        處理新檔案
+                    </button>
+                </div>
+                
+                {% if zip_result and zip_result.success %}
+                <!-- ZIP 檔案詳情 -->
+                <div class="zip-details">
+                    <h4>ZIP 檔案資訊</h4>
+                    <div class="zip-summary">
+                        <div class="zip-stat">
+                            <span class="stat-label">檔案名稱：</span>
+                            <span class="stat-value">{{ zip_result.zip_filename }}</span>
+                        </div>
+                        <div class="zip-stat">
+                            <span class="stat-label">檔案大小：</span>
+                            <span class="stat-value">{{ zip_result.zip_size_mb }} MB</span>
+                        </div>
+                        <div class="zip-stat">
+                            <span class="stat-label">包含檔案：</span>
+                            <span class="stat-value">{{ zip_result.total_files }} 個 PDF</span>
+                        </div>
+                        <div class="zip-stat">
+                            <span class="stat-label">原始大小：</span>
+                            <span class="stat-value">{{ zip_result.original_size_mb }} MB</span>
+                        </div>
+                        <div class="zip-stat">
+                            <span class="stat-label">壓縮效果：</span>
+                            <span class="stat-value">節省 {{ zip_result.compression_ratio }}%</span>
+                        </div>
+                        <div class="zip-stat">
+                            <span class="stat-label">處理時間：</span>
+                            <span class="stat-value">{{ "%.2f"|format(zip_result.processing_time) }} 秒</span>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- 分割檔案列表 -->
+            <div class="split-files-section">
+                <h3>分割檔案詳情</h3>
+                <div class="files-list">
+                    {% for file in split_result.split_files %}
+                    <div class="file-item">
+                        <div class="file-info">
+                            <div class="file-header">
+                                <h4 class="file-name">{{ file.filename }}</h4>
+                                <span class="file-index">#{{ file.index }}</span>
+                            </div>
+                            <div class="file-details">
+                                <div class="detail-item">
+                                    <span class="detail-label">頁面範圍：</span>
+                                    <span class="detail-value">
+                                        {% if file.start_page == file.end_page %}
+                                            第 {{ file.start_page }} 頁
+                                        {% else %}
+                                            第 {{ file.start_page }}-{{ file.end_page }} 頁
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">頁數：</span>
+                                    <span class="detail-value">{{ file.page_count }} 頁</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">檔案大小：</span>
+                                    <span class="detail-value">{{ file.size_mb }} MB</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="file-actions">
+                            <button type="button" class="btn btn-download" data-file-index="{{ file.index }}">
+                                <span class="btn-icon">⬇️</span>
+                                下載
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- 所選書籤資訊 -->
+            {% if selected_bookmarks %}
+            <div class="selected-bookmarks-section">
+                <h3>使用的分割點</h3>
+                <div class="bookmarks-grid">
+                    {% for bookmark in selected_bookmarks %}
+                    <div class="bookmark-item">
+                        <span class="bookmark-page">第 {{ bookmark.page_num }} 頁</span>
+                        <span class="bookmark-title">{{ bookmark.title }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </main>
+        
+        <footer>
+            <p>&copy; 2024 PDF 分割工具</p>
+        </footer>
+    </div>
+    
+    <script>
+        // 頁面載入完成後的處理
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('分割結果頁面已載入');
+            
+            // 設定事件委派處理所有按鈕點擊
+            setupEventDelegation();
+            
+            // 顯示成功訊息
+            showInfo('PDF 分割完成！您可以下載個別檔案或 ZIP 打包檔案。');
+        });
+        
+        // 設定事件委派
+        function setupEventDelegation() {
+            document.addEventListener('click', function(e) {
+                // 處理檔案下載按鈕
+                if (e.target.closest('.btn-download')) {
+                    const button = e.target.closest('.btn-download');
+                    const fileIndex = button.getAttribute('data-file-index');
+                    if (fileIndex) {
+                        downloadFile(fileIndex);
+                    }
+                }
+                
+                // 處理重定向按鈕
+                if (e.target.closest('[data-redirect]')) {
+                    const button = e.target.closest('[data-redirect]');
+                    const redirectUrl = button.getAttribute('data-redirect');
+                    if (redirectUrl) {
+                        window.location.href = redirectUrl;
+                    }
+                }
+            });
+        }
+        
+        // 下載單個檔案
+        function downloadFile(fileIndex) {
+            showInfo('正在準備下載檔案 ' + fileIndex + '...');
+            var baseUrl = '{{ url_for("download_file", file_index=1) }}';
+            window.location.href = baseUrl.replace('1', fileIndex);
+        }
+        
+        // 下載 ZIP 檔案
+        function downloadZipFile() {
+            showInfo('正在準備 ZIP 下載...');
+            window.location.href = '{{ url_for("download_zip") }}';
+        }
+        
+        // 顯示資訊訊息
+        function showInfo(message) {
+            var flashContainer = document.querySelector('.flash-messages') || createFlashContainer();
+            var infoDiv = document.createElement('div');
+            infoDiv.className = 'flash-message flash-info';
+            infoDiv.innerHTML = 
+                '<span class="flash-text">' + message + '</span>' +
+                '<button type="button" class="flash-close" onclick="this.parentElement.remove()">&times;</button>';
+            
+            flashContainer.appendChild(infoDiv);
+            
+            // 3秒後自動移除
+            setTimeout(function() {
+                if (infoDiv.parentElement) {
+                    infoDiv.remove();
+                }
+            }, 3000);
+        }
+        
+        // 創建 Flash 訊息容器
+        function createFlashContainer() {
+            var header = document.querySelector('header');
+            var main = document.querySelector('main');
+            
+            var flashContainer = document.createElement('div');
+            flashContainer.className = 'flash-messages';
+            
+            if (header && main) {
+                header.parentNode.insertBefore(flashContainer, main);
+            } else {
+                document.body.appendChild(flashContainer);
+            }
+            
+            return flashContainer;
+        }
+    </script>
+</body>
+</html> 

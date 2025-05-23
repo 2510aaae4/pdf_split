@@ -1,0 +1,125 @@
+# Task ID: 1
+# Title: Set up Flask application structure
+# Status: done
+# Dependencies: None
+# Priority: high
+# Description: Initialize the Flask application with basic project structure and configuration for handling PDF uploads and temporary file storage.
+# Details:
+Create a new Flask application with the following structure:
+- app.py: Main application file with Flask initialization
+- templates/: Directory for HTML templates
+- static/: Directory for CSS and JavaScript files
+- Set up configuration for upload folder using tempfile module
+- Configure maximum upload size and allowed file types (PDF only)
+- Initialize basic error handling and logging
+
+# Test Strategy:
+Verify application starts without errors. Test basic routing to ensure the application responds to requests. Confirm temporary directory creation and permissions are correct.
+
+# Subtasks:
+## 1. Create basic Flask application structure [done]
+### Dependencies: None
+### Description: Set up the initial Flask application with the required directory structure and basic configuration
+### Details:
+1. Create the project root directory
+2. Create app.py with basic Flask initialization code:
+   ```python
+   from flask import Flask, render_template, request, redirect, url_for
+   
+   app = Flask(__name__)
+   
+   @app.route('/')
+   def index():
+       return render_template('index.html')
+   
+   if __name__ == '__main__':
+       app.run(debug=True)
+   ```
+3. Create the templates/ directory with a basic index.html template
+4. Create the static/ directory with subdirectories for css/ and js/
+5. Create a requirements.txt file with Flask and other dependencies
+6. Set up a basic .gitignore file for Python/Flask projects
+
+## 2. Configure file upload functionality [done]
+### Dependencies: 1.1
+### Description: Implement configuration for handling PDF uploads with proper temporary storage
+### Details:
+1. Import necessary modules in app.py:
+   ```python
+   import os
+   import tempfile
+   from werkzeug.utils import secure_filename
+   ```
+2. Configure upload settings in app.py:
+   ```python
+   # Create a temporary directory for file uploads
+   UPLOAD_FOLDER = tempfile.mkdtemp()
+   app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+   app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max upload size
+   ALLOWED_EXTENSIONS = {'pdf'}
+   
+   def allowed_file(filename):
+       return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+   ```
+3. Create a route for file uploads in app.py:
+   ```python
+   @app.route('/upload', methods=['POST'])
+   def upload_file():
+       # Check if the post request has the file part
+       if 'file' not in request.files:
+           return redirect(request.url)
+       file = request.files['file']
+       # If user does not select file, browser also
+       # submit an empty part without filename
+       if file.filename == '':
+           return redirect(request.url)
+       if file and allowed_file(file.filename):
+           filename = secure_filename(file.filename)
+           filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+           file.save(filepath)
+           return redirect(url_for('index'))
+   ```
+4. Update the index.html template to include a file upload form
+
+## 3. Implement error handling and logging [done]
+### Dependencies: 1.1, 1.2
+### Description: Set up comprehensive error handling and logging for the application
+### Details:
+1. Import logging module in app.py:
+   ```python
+   import logging
+   from logging.handlers import RotatingFileHandler
+   ```
+2. Configure error handling and custom error pages:
+   ```python
+   @app.errorhandler(404)
+   def page_not_found(e):
+       return render_template('404.html'), 404
+   
+   @app.errorhandler(413)
+   def request_entity_too_large(e):
+       return render_template('413.html', max_size='16MB'), 413
+   
+   @app.errorhandler(500)
+   def internal_server_error(e):
+       return render_template('500.html'), 500
+   ```
+3. Set up application logging:
+   ```python
+   if not app.debug:
+       # Create logs directory if it doesn't exist
+       if not os.path.exists('logs'):
+           os.mkdir('logs')
+       # Set up file handler for logging
+       file_handler = RotatingFileHandler('logs/app.log', maxBytes=10240, backupCount=10)
+       file_handler.setFormatter(logging.Formatter(
+           '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+       ))
+       file_handler.setLevel(logging.INFO)
+       app.logger.addHandler(file_handler)
+       app.logger.setLevel(logging.INFO)
+       app.logger.info('Application startup')
+   ```
+4. Create basic error template files in the templates directory (404.html, 413.html, 500.html)
+5. Add cleanup code to remove temporary files when they're no longer needed
+

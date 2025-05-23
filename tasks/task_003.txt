@@ -1,0 +1,55 @@
+# Task ID: 3
+# Title: Develop bookmark parsing functionality
+# Status: done
+# Dependencies: 2
+# Priority: high
+# Description: Implement the core logic to extract and parse bookmarks from uploaded PDF files using PyPDF2.
+# Details:
+1. Create a utility function `get_bookmarks_recursive()` that:
+   - Opens the PDF using PyPDF2.PdfReader
+   - Recursively traverses the reader.outline structure
+   - Extracts bookmark titles and corresponding page numbers using reader.get_destination_page_number()
+   - Returns a structured list of bookmarks with titles and page numbers
+2. Handle edge cases such as PDFs without bookmarks
+3. Implement proper error handling for parsing failures
+4. Add logging for debugging purposes
+
+# Test Strategy:
+Test with various PDFs containing different bookmark structures. Verify correct extraction of bookmark titles and page numbers. Confirm proper handling of PDFs without bookmarks or with corrupted bookmark structures.
+
+# Subtasks:
+## 1. Create basic bookmark extraction function [done]
+### Dependencies: None
+### Description: Implement the core `get_bookmarks_recursive()` function that extracts bookmark information from PDF files
+### Details:
+1. Create a utility function `get_bookmarks_recursive()` that takes a PDF file path as input
+2. Use PyPDF2.PdfReader to open the PDF file
+3. Implement recursive traversal of the reader.outline structure
+4. For each bookmark, extract title and page number using reader.get_destination_page_number()
+5. Return a structured list/dictionary of bookmarks with their hierarchy preserved
+6. Include basic validation to check if the file exists and is a valid PDF
+
+## 2. Implement edge case handling [done]
+### Dependencies: 3.1
+### Description: Extend the bookmark extraction function to handle various edge cases and provide meaningful defaults
+### Details:
+1. Handle PDFs without bookmarks by returning an empty structure
+2. Handle malformed bookmark structures that might cause traversal errors
+3. Handle bookmarks that point to invalid page numbers
+4. Add validation for empty or corrupted PDF files
+5. Implement fallback behavior when bookmark extraction fails partially
+6. Return appropriate status indicators along with the bookmark data
+
+## 3. Add error handling and logging [done]
+### Dependencies: 3.1, 3.2
+### Description: Implement comprehensive error handling and logging for the bookmark parsing functionality
+### Details:
+1. Implement try-except blocks around critical operations
+2. Create specific exception types for different failure scenarios
+3. Add detailed logging using Python's logging module
+4. Log entry and exit points of the function
+5. Log details about the PDF structure for debugging purposes
+6. Include performance metrics in logs (time taken to parse)
+7. Ensure errors are properly propagated with meaningful messages
+8. Add documentation with examples of common error scenarios and how they're handled
+

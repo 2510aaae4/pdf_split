@@ -1,0 +1,56 @@
+# Task ID: 4
+# Title: Implement bookmark filtering logic
+# Status: done
+# Dependencies: 3
+# Priority: high
+# Description: Create functionality to filter bookmarks based on predefined regex patterns to identify potential split points.
+# Details:
+1. Define the three regex patterns specified in the PRD:
+   - `r"^\d+\s+.+"` (e.g., "1 Introduction")
+   - `r"^\d+(\.\d+)+\s*.*"` (e.g., "1.1 Overview")
+   - `r"^(Chapter|Part|Section)\s+\w+.*"` (e.g., "Chapter 1")
+2. Create a function that applies these patterns to bookmark titles
+3. Extend the bookmark data structure to include a 'matches_pattern' flag
+4. Modify the '/upload' route to call this filtering function after parsing bookmarks
+5. Add logic to handle cases where no bookmarks match any patterns
+
+# Test Strategy:
+Test with PDFs containing various bookmark naming conventions. Verify correct identification of bookmarks matching each pattern. Confirm proper handling when no bookmarks match patterns.
+
+# Subtasks:
+## 1. Define regex patterns and create filtering function [done]
+### Dependencies: None
+### Description: Implement the core filtering logic with predefined regex patterns to identify potential split points in bookmark titles
+### Details:
+1. Create a new module `bookmark_filter.py` to contain the filtering logic
+2. Define the three regex patterns as constants:
+   - `NUMBERED_TITLE_PATTERN = r"^\d+\s+.+"` (e.g., "1 Introduction")
+   - `HIERARCHICAL_TITLE_PATTERN = r"^\d+(\.\d+)+\s*.*"` (e.g., "1.1 Overview")
+   - `CHAPTER_TITLE_PATTERN = r"^(Chapter|Part|Section)\s+\w+.*"` (e.g., "Chapter 1")
+3. Create a function `matches_any_pattern(title)` that takes a bookmark title and returns a boolean indicating if it matches any pattern
+4. Create a function `filter_bookmarks(bookmarks)` that takes a list of bookmark objects and returns the same list with a new `matches_pattern` boolean property added to each bookmark
+5. Add unit tests to verify the filtering logic works correctly with various bookmark title formats
+
+## 2. Extend bookmark data structure and integrate with upload route [done]
+### Dependencies: 4.1
+### Description: Modify the existing bookmark data structure and integrate the filtering function with the PDF upload process
+### Details:
+1. Update the bookmark data structure in `models.py` or relevant file to include a `matches_pattern` boolean field with a default value of `False`
+2. Modify the `/upload` route in the main application file to call the `filter_bookmarks()` function after parsing bookmarks from the uploaded PDF
+3. Ensure the updated bookmark objects with pattern matching information are stored in the session or database
+4. Update any relevant data transfer objects or serialization methods to include the new `matches_pattern` field
+5. Add logging to track how many bookmarks matched patterns during processing
+
+## 3. Implement fallback logic for no pattern matches [done]
+### Dependencies: 4.2
+### Description: Add logic to handle cases where no bookmarks match any of the predefined patterns
+### Details:
+1. After filtering bookmarks, add a check to determine if any bookmarks matched patterns
+2. If no bookmarks matched patterns, implement a fallback strategy:
+   - Add a warning message to be displayed to the user
+   - Consider implementing a secondary filtering approach (e.g., looking for bookmarks with page numbers or certain length characteristics)
+   - Provide an option for users to manually select bookmarks as split points
+3. Update the frontend to display appropriate messaging when no pattern matches are found
+4. Add a configuration option to allow users to disable pattern filtering entirely
+5. Document the fallback behavior in user documentation
+

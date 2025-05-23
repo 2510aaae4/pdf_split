@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>選擇書籤分割點 | PDF 分割工具</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>PDF 分割工具</h1>
+            <p>選擇書籤作為分割點</p>
+        </header>
+        
+        <!-- Flash 訊息顯示區域 -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message flash-{{ category }}">
+                            <span class="flash-text">{{ message }}</span>
+                            <button type="button" class="flash-close" onclick="this.parentElement.remove()">&times;</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        <main>
+            <!-- 檔案資訊摘要 -->
+            <div class="file-summary-card">
+                <h3>處理檔案</h3>
+                <div class="file-summary-info">
+                    <span class="summary-label">檔案：</span>
+                    <span class="summary-value">{{ file_info.original_filename }}</span>
+                    <span class="summary-label">大小：</span>
+                    <span class="summary-value">{{ "%.1f"|format(file_info.file_size / 1024 / 1024) }} MB</span>
+                </div>
+            </div>
+            
+            <!-- 書籤分析結果 -->
+            <div class="analysis-results">
+                <h3>書籤分析結果</h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-number">{{ bookmark_data.parse_stats.total_bookmarks }}</span>
+                        <span class="stat-label">總書籤數</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">{{ bookmark_data.filter_stats.matched_bookmarks }}</span>
+                        <span class="stat-label">匹配模式</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">{{ bookmark_data.parse_stats.total_pages }}</span>
+                        <span class="stat-label">總頁數</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">{{ "%.1f"|format(bookmark_data.filter_stats.match_percentage) }}%</span>
+                        <span class="stat-label">匹配率</span>
+                    </div>
+                </div>
+                
+                <!-- 建議區域 -->
+                {% if bookmark_data.recommendations %}
+                <div class="recommendations">
+                    <h4>🎯 分割建議</h4>
+                    <ul class="recommendation-list">
+                        {% for recommendation in bookmark_data.recommendations %}
+                        <li>{{ recommendation }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- 書籤選擇表單 -->
+            {% if bookmark_data.bookmarks %}
+            <form action="{{ url_for('process_split') }}" method="post" class="bookmark-selection-form">
+                <div class="selection-controls">
+                    <h3>選擇分割點</h3>
+                    <div class="controls-row">
+                        <div class="control-buttons">
+                            <button type="button" onclick="selectMatched()" class="btn btn-secondary">
+                                <span class="btn-icon">✅</span>
+                                選擇所有匹配的書籤
+                            </button>
+                            <button type="button" onclick="selectAll()" class="btn btn-secondary">
+                                <span class="btn-icon">📋</span>
+                                全選
+                            </button>
+                            <button type="button" onclick="clearSelection()" class="btn btn-secondary">
+                                <span class="btn-icon">🗑️</span>
+                                清除選擇
+                            </button>
+                        </div>
+                        <div class="level-selection">
+                            <label for="levelSelect">按層級選擇：</label>
+                            <select id="levelSelect" onchange="selectByLevel()" class="level-select">
+                                <option value="">請選擇層級</option>
+                                {% set available_levels = [] %}
+                                {% for bookmark in bookmark_data.bookmarks %}
+                                    {% if bookmark.valid and bookmark.level not in available_levels %}
+                                        {{ available_levels.append(bookmark.level) or '' }}
+                                    {% endif %}
+                                {% endfor %}
+                                {% for level in available_levels|sort %}
+                                <option value="{{ level }}">Level {{ level }}{% if level == 0 %} (根目錄){% endif %}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="filter-options">
+                            <label>
+                                <input type="checkbox" id="showOnlyMatched" onchange="toggleMatchedOnly()">
+                                只顯示匹配的書籤
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bookmarks-list">
+                    {% for bookmark in bookmark_data.bookmarks %}
+                    {% if bookmark.valid %}
+                    <div class="bookmark-item {% if bookmark.matches_pattern %}matched{% endif %}" data-matches="{{ bookmark.matches_pattern|lower }}">
+                        <div class="bookmark-content">
+                            <label class="bookmark-label">
+                                <input type="checkbox" name="selected_bookmarks" value="{{ bookmark.id }}" 
+                                       {% if bookmark.matches_pattern %}checked{% endif %}>
+                                <div class="bookmark-info">
+                                    <div class="bookmark-title-row">
+                                        <span class="bookmark-title" style="margin-left: {{ bookmark.level * 20 }}px;">
+                                            {{ bookmark.title }}
+                                        </span>
+                                        <div class="bookmark-badges">
+                                            {% if bookmark.matches_pattern %}
+                                            <span class="badge badge-matched" title="匹配模式: {{ bookmark.matched_pattern }}">
+                                                {{ bookmark.matched_pattern }}
+                                            </span>
+                                            {% endif %}
+                                            <span class="badge badge-page">第 {{ bookmark.page_num }} 頁</span>
+                                        </div>
+                                    </div>
+                                    {% if bookmark.level > 0 %}
+                                    <div class="bookmark-level">
+                                        <span class="level-indicator">Level {{ bookmark.level }}</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-upload">
+                        <span class="btn-icon">✂️</span>
+                        開始分割 PDF
+                    </button>
+                    <a href="{{ url_for('upload_success') }}" class="btn btn-secondary">
+                        <span class="btn-icon">⬅️</span>
+                        返回上一步
+                    </a>
+                    <a href="{{ url_for('clear_session') }}" class="btn btn-secondary">
+                        <span class="btn-icon">🔄</span>
+                        重新開始
+                    </a>
+                </div>
+            </form>
+            {% else %}
+            <div class="no-bookmarks">
+                <div class="no-bookmarks-icon">📄</div>
+                <h3>沒有找到書籤</h3>
+                <p>此 PDF 檔案沒有書籤或書籤無法解析。</p>
+                <div class="no-bookmarks-actions">
+                    <a href="{{ url_for('upload_success') }}" class="btn btn-secondary">
+                        <span class="btn-icon">⬅️</span>
+                        返回上一步
+                    </a>
+                    <a href="{{ url_for('clear_session') }}" class="btn btn-secondary">
+                        <span class="btn-icon">🔄</span>
+                        重新開始
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </main>
+        
+        <footer>
+            <p>&copy; 2024 PDF 分割工具</p>
+        </footer>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // 選擇所有匹配模式的書籤
+        function selectMatched() {
+            const checkboxes = document.querySelectorAll('input[name="selected_bookmarks"]');
+            checkboxes.forEach(checkbox => {
+                const bookmarkItem = checkbox.closest('.bookmark-item');
+                if (bookmarkItem && bookmarkItem.classList.contains('matched')) {
+                    checkbox.checked = true;
+                }
+            });
+            updateSelectionCount();
+        }
+        
+        // 全選所有書籤
+        function selectAll() {
+            const checkboxes = document.querySelectorAll('input[name="selected_bookmarks"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = true;
+            });
+            updateSelectionCount();
+        }
+        
+        // 清除所有選擇
+        function clearSelection() {
+            const checkboxes = document.querySelectorAll('input[name="selected_bookmarks"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            updateSelectionCount();
+        }
+        
+        // 按層級選擇書籤
+        function selectByLevel() {
+            const levelSelect = document.getElementById('levelSelect');
+            const selectedLevel = levelSelect.value;
+            
+            if (selectedLevel === '') {
+                return; // 沒有選擇層級，不執行任何操作
+            }
+            
+            const checkboxes = document.querySelectorAll('input[name="selected_bookmarks"]');
+            let selectedCount = 0;
+            
+            checkboxes.forEach(checkbox => {
+                const bookmarkItem = checkbox.closest('.bookmark-item');
+                if (bookmarkItem) {
+                    // 從書籤項目中提取層級信息
+                    const levelIndicator = bookmarkItem.querySelector('.level-indicator');
+                    let bookmarkLevel = '0'; // 默認層級為0
+                    
+                    if (levelIndicator) {
+                        const levelText = levelIndicator.textContent.trim();
+                        const levelMatch = levelText.match(/Level (\d+)/);
+                        if (levelMatch) {
+                            bookmarkLevel = levelMatch[1];
+                        }
+                    }
+                    
+                    // 如果層級匹配，選中該書籤
+                    if (bookmarkLevel === selectedLevel) {
+                        checkbox.checked = true;
+                        selectedCount++;
+                    }
+                }
+            });
+            
+            updateSelectionCount();
+            
+            // 顯示選擇結果訊息
+            if (selectedCount > 0) {
+                const levelText = selectedLevel === '0' ? 'Level 0 (根目錄)' : `Level ${selectedLevel}`;
+                showSelectionMessage(`已選擇 ${selectedCount} 個 ${levelText} 的書籤`);
+            } else {
+                showSelectionMessage(`Level ${selectedLevel} 沒有找到書籤`);
+            }
+            
+            // 重置下拉選單
+            levelSelect.value = '';
+        }
+        
+        // 顯示選擇結果訊息
+        function showSelectionMessage(message) {
+            // 移除現有的訊息
+            const existingMessage = document.querySelector('.selection-message');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+            
+            // 創建新的訊息元素
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'selection-message';
+            messageDiv.style.cssText = `
+                background: #e3f2fd;
+                border: 1px solid #2196f3;
+                color: #1976d2;
+                padding: 8px 12px;
+                border-radius: 4px;
+                margin: 10px 0;
+                font-size: 14px;
+                animation: fadeInOut 3s ease-in-out;
+            `;
+            messageDiv.textContent = message;
+            
+            // 添加淡入淡出動畫
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes fadeInOut {
+                    0% { opacity: 0; transform: translateY(-10px); }
+                    20% { opacity: 1; transform: translateY(0); }
+                    80% { opacity: 1; transform: translateY(0); }
+                    100% { opacity: 0; transform: translateY(-10px); }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // 插入到控制區域後面
+            const controlsRow = document.querySelector('.controls-row');
+            controlsRow.parentNode.insertBefore(messageDiv, controlsRow.nextSibling);
+            
+            // 3秒後自動移除
+            setTimeout(() => {
+                if (messageDiv.parentNode) {
+                    messageDiv.remove();
+                }
+                if (style.parentNode) {
+                    style.remove();
+                }
+            }, 3000);
+        }
+        
+        // 切換顯示模式（只顯示匹配的書籤）
+        function toggleMatchedOnly() {
+            const showOnlyMatched = document.getElementById('showOnlyMatched').checked;
+            const bookmarkItems = document.querySelectorAll('.bookmark-item');
+            
+            bookmarkItems.forEach(item => {
+                if (showOnlyMatched) {
+                    if (item.getAttribute('data-matches') === 'true') {
+                        item.style.display = 'block';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                } else {
+                    item.style.display = 'block';
+                }
+            });
+        }
+        
+        // 更新選擇計數
+        function updateSelectionCount() {
+            const selectedCount = document.querySelectorAll('input[name="selected_bookmarks"]:checked').length;
+            const submitButton = document.querySelector('button[type="submit"]');
+            
+            if (selectedCount > 0) {
+                submitButton.innerHTML = `<span class="btn-icon">✂️</span>分割 PDF (${selectedCount} 個分割點)`;
+                submitButton.disabled = false;
+            } else {
+                submitButton.innerHTML = '<span class="btn-icon">✂️</span>開始分割 PDF';
+                submitButton.disabled = true;
+            }
+        }
+        
+        // 監聽複選框變化
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkboxes = document.querySelectorAll('input[name="selected_bookmarks"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', updateSelectionCount);
+            });
+            
+            // 初始化計數
+            updateSelectionCount();
+        });
+    </script>
+</body>
+</html> 

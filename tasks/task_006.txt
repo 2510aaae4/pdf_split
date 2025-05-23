@@ -1,0 +1,82 @@
+# Task ID: 6
+# Title: Implement PDF splitting logic
+# Status: done
+# Dependencies: 5
+# Priority: high
+# Description: Develop the core functionality to split the uploaded PDF at selected bookmark points using PyPDF2.
+# Details:
+1. Create a function that:
+   - Takes the original PDF path and list of selected page numbers as input
+   - Opens the PDF using PyPDF2.PdfReader
+   - Creates a temporary directory for split files
+   - For each split point:
+     * Determine page range (from current split point to next split point or end)
+     * Create a new PdfWriter object
+     * Add pages from the determined range
+     * Save as a new PDF file with appropriate naming
+   - Return paths to all created files
+2. Integrate with the '/select_bookmarks' POST route
+3. Handle edge cases (e.g., selecting first/last page)
+4. Implement error handling for splitting failures
+
+# Test Strategy:
+Test splitting PDFs of various sizes at different bookmark points. Verify correct page ranges in split files. Confirm handling of edge cases like selecting the first or last bookmark.
+
+# Subtasks:
+## 1. Create core PDF splitting function [done]
+### Dependencies: None
+### Description: Implement the main function that handles splitting a PDF file at specified page numbers using PyPDF2
+### Details:
+1. Create a function `split_pdf(pdf_path, split_points)` that:
+   - Takes the original PDF path and list of selected page numbers as input
+   - Opens the PDF using PyPDF2.PdfReader
+   - Creates a temporary directory for split files using tempfile module
+   - Sorts the split points in ascending order
+   - For each consecutive pair of split points:
+     * Determine page range (from current split point to next split point - 1)
+     * Create a new PdfWriter object
+     * Add pages from the determined range using a loop
+     * Generate an appropriate filename (e.g., 'split_X-Y.pdf')
+     * Save as a new PDF file in the temp directory
+   - Handle the last segment (from last split point to end of document)
+   - Return a list of paths to all created files
+2. Include proper docstrings and type hints
+3. Add basic error handling for file operations
+
+## 2. Implement edge case handling and validation [done]
+### Dependencies: 6.1
+### Description: Enhance the splitting function to handle various edge cases and validate inputs
+### Details:
+1. Add validation for input parameters:
+   - Check if the PDF file exists and is readable
+   - Verify split points are valid page numbers within the document range
+   - Handle empty split_points list (return original PDF or error)
+2. Implement specific edge case handling:
+   - If first page (0) is not in split points, add it automatically
+   - If last page is not included, ensure the final segment goes to the end
+   - Handle single-page PDFs appropriately
+   - Check for and remove duplicate split points
+3. Add comprehensive error handling with specific exception types:
+   - FileNotFoundError for missing PDFs
+   - PermissionError for access issues
+   - PyPDF2-specific exceptions
+   - Custom exceptions for invalid split points
+4. Add logging for debugging purposes
+
+## 3. Integrate PDF splitting with web routes [done]
+### Dependencies: 6.1, 6.2
+### Description: Connect the PDF splitting functionality to the web application's routes and UI
+### Details:
+1. Modify the '/select_bookmarks' POST route to:
+   - Extract selected bookmark page numbers from form data
+   - Retrieve the path of the previously uploaded PDF
+   - Call the split_pdf function with appropriate parameters
+   - Store the paths of split PDFs in the session
+   - Handle errors and provide appropriate user feedback
+2. Create a new route '/download_split/<index>' that:
+   - Retrieves the specified split PDF path from session data
+   - Serves the file as a download with appropriate headers
+   - Handles missing files gracefully
+3. Add cleanup functionality to remove temporary files after download or session expiration
+4. Update the UI templates to show splitting results and download options
+

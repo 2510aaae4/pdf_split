@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>413 - 檔案過大 | PDF 分割工具</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>PDF 分割工具</h1>
+            <p>根據書籤結構將 PDF 檔案分割成多個較小的檔案</p>
+        </header>
+        
+        <main>
+            <div class="error-section">
+                <div class="error-icon">📁</div>
+                <h2>413 - 檔案過大</h2>
+                <p class="error-message">
+                    您上傳的檔案超過了允許的大小限制。
+                </p>
+                <p class="error-description">
+                    目前的檔案大小限制為：<strong>{{ max_size or '16MB' }}</strong>
+                </p>
+                
+                <div class="error-tips">
+                    <h3>建議解決方案：</h3>
+                    <ul class="error-reasons">
+                        <li>使用 PDF 壓縮工具減少檔案大小</li>
+                        <li>將大型 PDF 分成較小的部分</li>
+                        <li>檢查是否選擇了正確的檔案</li>
+                        <li>移除不必要的圖片或附件</li>
+                    </ul>
+                </div>
+                
+                <div class="error-actions">
+                    <a href="{{ url_for('index') }}" class="btn btn-upload">
+                        <span class="btn-icon">🔄</span>
+                        重新選擇檔案
+                    </a>
+                    <button onclick="history.back()" class="btn btn-secondary">
+                        <span class="btn-icon">⬅️</span>
+                        返回上一頁
+                    </button>
+                </div>
+            </div>
+        </main>
+        
+        <footer>
+            <p>&copy; 2024 PDF 分割工具</p>
+        </footer>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html> 

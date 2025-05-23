@@ -1,0 +1,215 @@
+--- START OF FILE prd.txt ---
+
+<context>
+# Overview
+本產品是一個 Web 應用程式，旨在幫助使用者根據 PDF 文件內建的書籤（目錄）結構，將大型 PDF 文件分割成多個較小的、獨立的 PDF 檔案。它解決了手動分割 PDF 耗時費力、容易出錯的問題，特別適用於需要按章節、主題或特定標題分發或管理文件內容的使用者。其價值在於提高文件處理效率，方便使用者快速獲取和分享 PDF 的特定部分。
+
+# Core Features
+1.  **PDF 檔案上傳 (PDF File Upload)**
+    *   **What it does:** 允許使用者透過網頁介面上傳本地的 PDF 檔案至伺服器進行處理。
+    *   **Why it's important:** 這是使用者與應用程式互動的第一步，也是後續所有功能的基礎。
+    *   **How it works at a high level:**
+        1.  前端提供一個檔案選擇器。
+        2.  使用者選擇 PDF 檔案後，檔案透過 HTTP POST 請求傳輸到後端 Flask 應用程式。
+        3.  後端驗證檔案類型和大小（可選），並將檔案儲存到伺服器的臨時位置。
+
+2.  **書籤解析與篩選 (Bookmark Parsing & Filtering)**
+    *   **What it does:** 應用程式讀取上傳 PDF 檔案的書籤結構，並根據預設的模式（如 "數字 開頭"、"數字.數字 開頭"、"Chapter 開頭"）篩選出符合條件的書籤作為潛在的分割點。
+    *   **Why it's important:** 自動識別潛在的分割點，簡化了使用者的選擇過程，提高了分割的準確性和效率。
+    *   **How it works at a high level:**
+        1.  後端使用 PDF處理函式庫（如 PyPDF2 或 PikePDF）打開上傳的 PDF 檔案。
+        2.  遍歷 PDF 的書籤（outline/table of contents）結構，提取每個書籤的標題和其指向的頁碼。
+        3.  對每個書籤標題應用正則表達式，匹配預設的模式。
+        4.  將符合模式的書籤及其頁碼整理成列表。
+
+3.  **使用者選擇分割點 (User Selection of Split Points)**
+    *   **What it does:** 向使用者展示篩選後的書籤列表，允許使用者勾選希望作為分割起始點的書籤。
+    *   **Why it's important:** 賦予使用者對分割過程的最終控制權，確保分割結果符合其具體需求。
+    *   **How it works at a high level:**
+        1.  後端將篩選出的書籤列表傳遞給前端。
+        2.  前端以可勾選的列表形式（例如，帶有checkbox的清單）展示這些書籤及其對應頁碼。
+        3.  使用者選擇一個或多個書籤。
+        4.  使用者提交選擇，選中的書籤資訊（通常是頁碼）被發送回後端。
+
+4.  **PDF 分割與打包下載 (PDF Splitting & Zipped Download)**
+    *   **What it does:** 根據使用者選擇的書籤（分割點），將原始 PDF 分割成多個獨立的 PDF 檔案。這些分割後的檔案將被壓縮成一個 ZIP 檔案，供使用者下載。
+    *   **Why it's important:** 實現了核心功能，將大型文件分解為易於管理和分發的小單元。ZIP 打包方便一次性下載所有分割後的檔案。
+    *   **How it works at a high level:**
+        1.  後端接收使用者選擇的分割點（頁碼）。
+        2.  使用 PDF 處理函式庫，根據這些頁碼將原始 PDF 的頁面範圍提取出來，並分別儲存為新的 PDF 檔案到伺服器的臨時目錄。
+        3.  使用 `zipfile` 函式庫將所有新生成的 PDF 檔案壓縮成一個 ZIP 檔案。
+        4.  後端提供此 ZIP 檔案的下載連結，或直接觸發瀏覽器下載。
+        5.  下載完成後，清理伺服器上的臨時 PDF 檔案和 ZIP 檔案。
+
+# User Experience
+*   **User Personas:**
+    *   **學生 (小陳):** 需要從老師提供的大型教材 PDF 中，按章節提取內容方便複習和攜帶。
+    *   **研究員 (林博士):** 下載了一篇很長的學術論文集 PDF，希望按各篇論文的標題分割，方便閱讀和引用。
+    *   **行政助理 (王小姐):** 收到一份包含多個部門報告的合併 PDF，需要按部門名稱（通常是書籤）將其分發給對應部門。
+*   **Key User Flows:**
+    1.  **上傳與選擇流程:**
+        *   使用者訪問應用程式首頁。
+        *   點擊「上傳 PDF」按鈕，選擇本地 PDF 檔案。
+        *   檔案上傳成功後，頁面跳轉或動態顯示符合分割模式的書籤列表。
+        *   使用者勾選希望作為分割點的書籤。
+        *   點擊「開始分割」按鈕。
+    2.  **處理與下載流程:**
+        *   系統在後端執行 PDF 分割和 ZIP 壓縮操作（前端可顯示處理中狀態）。
+        *   處理完成後，自動觸發 ZIP 檔案下載，或提供下載連結。
+        *   使用者保存 ZIP 檔案到本地。
+*   **UI/UX Considerations:**
+    *   **簡潔直觀:** 單頁應用或極簡的多頁流程，操作步驟清晰明瞭。
+    *   **即時反饋:** 檔案上傳進度（可選），書籤解析成功/失敗提示，分割處理中狀態。
+    *   **清晰的書籤選擇:** 書籤列表應易於閱讀，明確標示書籤標題和頁碼。
+    *   **錯誤提示:** 對於不符合格式的檔案、無書籤或無符合模式書籤的 PDF，給予友好提示。
+    *   **響應式設計:** 確保在桌面瀏覽器上有良好體驗。
+    *   **無狀態優先:** 盡可能使每次操作獨立，簡化伺服器狀態管理（例如，通過臨時檔案 ID 追蹤）。
+</context>
+
+<PRD>
+# Technical Architecture
+*   **System Components:**
+    1.  **Frontend:** HTML, CSS, JavaScript (無特定框架要求，純 JS 或輕量級框架如 Alpine.js 即可滿足 MVP)。
+    2.  **Backend:** Python Flask Web Application。
+    3.  **PDF Processing Library:** PyPDF2 (MVP), PikePDF (Future Enhancement for robustness).
+    4.  **Standard Python Libraries:** `os`, `tempfile`, `shutil`, `zipfile`, `re`.
+*   **Data Models (Primarily Transient/Session-based for MVP):**
+    *   **UploadedFile:** `session_id` (or temp file ID), `original_filename`, `temp_filepath_on_server`, `parsed_bookmarks` (list of dicts: `{'title': str, 'page_num': int, 'id': str, 'matches_pattern': bool}`).
+    *   **SplitJob:** `session_id`, `selected_split_points` (list of page numbers), `output_zip_path`.
+    *   *Note: For MVP, complex database persistence is not required. State can be managed via session or by passing temporary file identifiers between requests.*
+*   **APIs and Integrations (Internal Flask Routes):**
+    *   `/` (GET): 顯示上傳頁面 (`index.html`).
+    *   `/upload` (POST): 處理 PDF 檔案上傳，解析書籤，將結果（或檔案標識符）傳遞給選擇頁面。
+    *   `/select_bookmarks` (GET/POST):
+        *   GET: 顯示篩選後的書籤列表供使用者選擇 (`select_bookmarks.html`)。
+        *   POST: 接收使用者選擇的書籤，觸發分割和打包。
+    *   `/download/<filename>` (GET): 提供生成的 ZIP 檔案下載。
+*   **Infrastructure Requirements:**
+    *   Web Server (Flask's built-in for development, Gunicorn/uWSGI + Nginx for production).
+    *   Sufficient disk space for temporary storage of uploaded PDFs, split PDFs, and ZIP files. (Managed by `tempfile` module).
+    *   Python runtime environment.
+
+# Development Roadmap
+*   **MVP Requirements (Phase 1 - Core Splitting Functionality):**
+    1.  **Basic Flask App Setup:**
+        *   Initialize Flask app.
+        *   HTML template for file upload.
+    2.  **PDF Upload Handling:**
+        *   Route to receive PDF file.
+        *   Securely save uploaded PDF to a temporary location.
+    3.  **Bookmark Parsing (Core Logic):**
+        *   Function to open PDF with PyPDF2.
+        *   Recursive function to traverse `reader.outline` and extract `title` and `page_num` for all bookmarks.
+    4.  **Bookmark Filtering (Pattern Matching):**
+        *   Function to apply regex patterns (as defined: "number space", "number.dot", "Chapter") to bookmark titles.
+        *   Generate a list of bookmarks that match, including their page numbers.
+    5.  **Bookmark Selection UI & Logic:**
+        *   HTML template to display filtered bookmarks with checkboxes.
+        *   Route to handle form submission of selected bookmarks (page numbers).
+    6.  **PDF Splitting Logic (Core):**
+        *   Function to take original PDF path and list of selected page numbers.
+        *   Use PyPDF2 `PdfWriter` to create new PDFs for each segment defined by the split points.
+        *   Save split PDFs to a temporary directory.
+    7.  **Zipping & Downloading:**
+        *   Function to zip all split PDFs from the temporary directory.
+        *   Route to send the ZIP file for download using `send_file`.
+    8.  **Basic Temporary File Cleanup:**
+        *   Mechanism to delete uploaded PDF, split PDFs, and ZIP file after download or on error.
+    *   **Goal for MVP:** A functional web app where a user can upload a PDF, see a list of pattern-matched bookmarks, select some, and download a ZIP file of PDFs split according to their selection. Minimal UI styling.
+
+*   **Future Enhancements (Phase 2 & Beyond - Iterative Improvements):**
+    1.  **Enhanced UI/UX:**
+        *   AJAX for smoother uploads and bookmark display without full page reloads.
+        *   Loading indicators for processing steps.
+        *   Better visual feedback for errors or empty states (no bookmarks, no matches).
+        *   Option to preview bookmark structure or tree view.
+    2.  **Advanced Bookmark Pattern Customization:**
+        *   Allow users to define their own regex patterns for bookmark filtering.
+        *   Pre-set common patterns beyond the initial three.
+    3.  **Filename Customization for Split Files:**
+        *   Allow users to specify a naming convention for split files (e.g., use bookmark title, add prefix/suffix). Heavy sanitization needed.
+    4.  **Improved PDF Library:**
+        *   Switch to `PikePDF` for better handling of various PDF versions, encrypted files (if password provided), and potentially faster processing.
+    5.  **Error Handling & Robustness:**
+        *   Graceful handling of password-protected PDFs (prompt for password or reject).
+        *   Better error messages for corrupted or unparseable PDFs.
+    6.  **"Split All Matched" Option:**
+        *   A quick button to split at every bookmark that matches the current filter.
+    7.  **Select Split Level:**
+        *   If bookmark levels can be reliably determined, allow "split at all level X bookmarks."
+    8.  **State Management (if scaling):**
+        *   If usage grows, consider more robust session management or a lightweight database for tracking jobs if they become asynchronous.
+    9.  **Accessibility (a11y) Improvements.**
+    10. **Internationalization (i18n) for UI text.**
+
+# Logical Dependency Chain
+1.  **Backend: Flask App & Basic Upload Route (Foundation):**
+    *   Setup Flask app, define upload folder.
+    *   Create `/` route with `index.html` (simple upload form).
+    *   Create `/upload` (POST) route that saves the file temporarily.
+    *   *Visibility: User can upload a PDF, and it's saved on the server (dev can verify).*
+2.  **Backend: Bookmark Parsing & Filtering (Core Logic):**
+    *   Implement `get_bookmarks_recursive` function using PyPDF2.
+    *   Implement regex pattern matching function.
+    *   Modify `/upload` route to call these functions after saving the PDF. For now, print results to console or return simple JSON.
+    *   *Visibility: Upload PDF -> dev can see parsed/filtered bookmarks in logs/debug output.*
+3.  **Frontend: Display Filtered Bookmarks & Selection Form (UI for Interaction):**
+    *   Create `select_bookmarks.html` template.
+    *   Modify `/upload` to redirect to a new `/select_bookmarks` (GET) route, passing the temp PDF identifier and the filtered bookmarks.
+    *   `/select_bookmarks` (GET) renders the template, displaying bookmarks with checkboxes.
+    *   Form on `select_bookmarks.html` POSTs selected bookmark identifiers (e.g., page numbers) back to `/select_bookmarks` (POST) or a new `/split` route.
+    *   *Visibility: User uploads PDF, sees a list of selectable bookmarks.*
+4.  **Backend: PDF Splitting Logic (Core Functionality):**
+    *   Implement PDF splitting function using PyPDF2 `PdfWriter` based on selected page numbers.
+    *   This function should save split files to a new temporary directory.
+    *   Integrate this into the POST handler from the bookmark selection step.
+    *   *Visibility: After user selects bookmarks and submits, dev can verify split PDF files are created in a temp server directory.*
+5.  **Backend: Zipping & Downloading (Final Output):**
+    *   Implement zipping function.
+    *   Integrate zipping after splitting.
+    *   Use `send_file` to allow download of the ZIP.
+    *   *Visibility: User selects bookmarks, submits, and gets a ZIP file downloaded.*
+6.  **Backend: Temporary File Cleanup (Essential Housekeeping):**
+    *   Implement logic (e.g., using `tempfile.TemporaryDirectory` or `after_this_request`) to delete the uploaded PDF, the directory of split PDFs, and the ZIP file.
+    *   *Visibility: Server disk space doesn't fill up after usage.*
+
+*Proper Pacing and Scoping:* Each step builds upon the previous, aiming for a usable front-end view as early as step 3. Step 1-2 are backend foundations. Step 3 makes it interactive. Step 4-5 deliver the core value. Step 6 is crucial for stability.
+
+# Risks and Mitigations
+*   **Technical Challenges:**
+    *   **PyPDF2 Limitations / PDF Variations:**
+        *   *Risk:* PyPDF2 might fail to parse bookmarks or pages from certain PDFs (e.g., very old, new, or slightly corrupt PDFs, complex outlines).
+        *   *Mitigation:* For MVP, accept limitations. Thoroughly test with diverse PDFs. Log errors. For future, plan migration to a more robust library like PikePDF.
+    *   **Bookmark Pattern Inflexibility:**
+        *   *Risk:* The initial hardcoded regex patterns might not cover all user needs.
+        *   *Mitigation:* Clearly document the supported patterns. For future, allow user-defined patterns or provide more pre-set options.
+    *   **Performance with Large PDFs:**
+        *   *Risk:* Parsing, splitting, and zipping very large PDFs can be slow and resource-intensive, potentially leading to request timeouts.
+        *   *Mitigation:* For MVP, accept limitations for very large files. Advise users. For future, consider asynchronous task processing (e.g., Celery) for long operations. Optimize PDF reading (e.g., read only necessary parts if possible).
+*   **Figuring out the MVP that we can build upon:**
+    *   **Risk of "Gold Plating" UI:** Spending too much time on UI for MVP.
+    *   *Mitigation:* Focus on raw functionality first. Use basic HTML forms. UI polish is a future enhancement.
+    *   **Risk of Overly Complex Bookmark Logic for MVP:** Trying to handle every conceivable bookmark structure.
+    *   *Mitigation:* Stick to the defined common patterns. Handle edge cases gracefully (e.g., "no matching bookmarks found").
+*   **Resource Constraints (Mainly Server-side):**
+    *   **Temporary Disk Space:**
+        *   *Risk:* Multiple concurrent users or large PDFs could exhaust temporary disk space if cleanup fails.
+        *   *Mitigation:* Robust temporary file/directory cleanup is critical. Monitor disk space on the server. Set reasonable limits on upload size if it becomes an issue.
+    *   **CPU/Memory Usage:**
+        *   *Risk:* PDF processing can be CPU and memory intensive.
+        *   *Mitigation:* For MVP on a small server, this might limit concurrent users. Optimize code where possible. For future, consider resource limits or scaling server resources.
+
+# Appendix
+*   **Research Findings:**
+    *   Analysis of common PDF bookmarking conventions (e.g., in textbooks, technical manuals, reports).
+    *   Comparison of Python PDF libraries (PyPDF2, PikePDF, ReportLab, etc.) for bookmark access and page manipulation capabilities.
+*   **Technical Specifications (Examples):**
+    *   Default Regex Patterns:
+        *   `r"^\d+\s+.+"` (e.g., "1 Introduction")
+        *   `r"^\d+(\.\d+)+\s*.*"` (e.g., "1.1 Overview", "2.3.4. Details") - (Note: refined from previous discussion for more robust sub-chapter matching)
+        *   `r"^(Chapter|Part|Section)\s+\w+.*"` (e.g., "Chapter 1", "Part A")
+    *   Temporary file lifetime: Deleted immediately after download or on session expiry/error.
+*   **PyPDF2 Outline Traversal Note:**
+    *   The `reader.outline` attribute returns a nested list. Each item can be a `PyPDF2.generic.Destination` (a bookmark) or another list (sub-bookmarks). Recursive traversal is necessary. `reader.get_destination_page_number(destination_object)` is key.
+
+--- END OF FILE prd.txt ---

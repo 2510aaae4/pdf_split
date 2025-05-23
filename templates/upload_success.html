@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>上傳成功 | PDF 分割工具</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>PDF 分割工具</h1>
+            <p>根據書籤結構將 PDF 檔案分割成多個較小的檔案</p>
+        </header>
+        
+        <!-- Flash 訊息顯示區域 -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message flash-{{ category }}">
+                            <span class="flash-text">{{ message }}</span>
+                            <button type="button" class="flash-close" onclick="this.parentElement.remove()">&times;</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        <main>
+            <div class="success-section">
+                <div class="success-icon">✅</div>
+                <h2>檔案上傳成功！</h2>
+                <p class="success-message">
+                    您的 PDF 檔案已成功上傳並準備進行處理。
+                </p>
+                
+                <!-- 檔案資訊卡片 -->
+                <div class="file-info-card">
+                    <h3>檔案資訊</h3>
+                    <div class="file-details">
+                        <div class="file-detail-item">
+                            <span class="detail-label">檔案名稱：</span>
+                            <span class="detail-value">{{ file_info.original_filename }}</span>
+                        </div>
+                        <div class="file-detail-item">
+                            <span class="detail-label">檔案大小：</span>
+                            <span class="detail-value">{{ "%.2f"|format(file_info.file_size / 1024 / 1024) }} MB</span>
+                        </div>
+                        <div class="file-detail-item">
+                            <span class="detail-label">上傳時間：</span>
+                            <span class="detail-value">{{ file_info.upload_time[:19].replace('T', ' ') }}</span>
+                        </div>
+                        <div class="file-detail-item">
+                            <span class="detail-label">檔案類型：</span>
+                            <span class="detail-value">PDF 文件</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 下一步說明 -->
+                <div class="next-steps">
+                    <h3>下一步</h3>
+                    <p>接下來系統將分析您的 PDF 檔案中的書籤結構，並提供分割選項。</p>
+                    <div class="steps-list">
+                        <div class="step-item">
+                            <span class="step-number">1</span>
+                            <span class="step-text">分析 PDF 書籤結構</span>
+                        </div>
+                        <div class="step-item">
+                            <span class="step-number">2</span>
+                            <span class="step-text">選擇分割點</span>
+                        </div>
+                        <div class="step-item">
+                            <span class="step-number">3</span>
+                            <span class="step-text">下載分割後的檔案</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 操作按鈕 -->
+                <div class="action-buttons">
+                    <button onclick="proceedToBookmarks()" class="btn btn-upload">
+                        <span class="btn-icon">📖</span>
+                        繼續處理書籤
+                    </button>
+                    
+                    <a href="{{ url_for('clear_session') }}" class="btn btn-secondary">
+                        <span class="btn-icon">🔄</span>
+                        重新上傳檔案
+                    </a>
+                    
+                    <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                        <span class="btn-icon">🏠</span>
+                        回到首頁
+                    </a>
+                </div>
+            </div>
+        </main>
+        
+        <footer>
+            <p>&copy; 2024 PDF 分割工具</p>
+        </footer>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        function proceedToBookmarks() {
+            // 顯示處理中訊息
+            showInfo('正在分析 PDF 書籤結構，請稍候...');
+            
+            // 禁用按鈕防止重複點擊
+            const button = event.target;
+            button.disabled = true;
+            button.innerHTML = '<span class="btn-icon">⏳</span>處理中...';
+            
+            // 重定向到書籤分析頁面
+            window.location.href = '{{ url_for("analyze_bookmarks") }}';
+        }
+    </script>
+</body>
+</html> 

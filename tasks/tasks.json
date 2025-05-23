@@ -1,0 +1,435 @@
+{
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Set up Flask application structure",
+      "description": "Initialize the Flask application with basic project structure and configuration for handling PDF uploads and temporary file storage.",
+      "status": "done",
+      "dependencies": [],
+      "priority": "high",
+      "details": "Create a new Flask application with the following structure:\n- app.py: Main application file with Flask initialization\n- templates/: Directory for HTML templates\n- static/: Directory for CSS and JavaScript files\n- Set up configuration for upload folder using tempfile module\n- Configure maximum upload size and allowed file types (PDF only)\n- Initialize basic error handling and logging",
+      "testStrategy": "Verify application starts without errors. Test basic routing to ensure the application responds to requests. Confirm temporary directory creation and permissions are correct.",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Create basic Flask application structure",
+          "description": "Set up the initial Flask application with the required directory structure and basic configuration",
+          "status": "done",
+          "dependencies": [],
+          "details": "1. Create the project root directory\n2. Create app.py with basic Flask initialization code:\n   ```python\n   from flask import Flask, render_template, request, redirect, url_for\n   \n   app = Flask(__name__)\n   \n   @app.route('/')\n   def index():\n       return render_template('index.html')\n   \n   if __name__ == '__main__':\n       app.run(debug=True)\n   ```\n3. Create the templates/ directory with a basic index.html template\n4. Create the static/ directory with subdirectories for css/ and js/\n5. Create a requirements.txt file with Flask and other dependencies\n6. Set up a basic .gitignore file for Python/Flask projects"
+        },
+        {
+          "id": 2,
+          "title": "Configure file upload functionality",
+          "description": "Implement configuration for handling PDF uploads with proper temporary storage",
+          "status": "done",
+          "dependencies": [
+            1
+          ],
+          "details": "1. Import necessary modules in app.py:\n   ```python\n   import os\n   import tempfile\n   from werkzeug.utils import secure_filename\n   ```\n2. Configure upload settings in app.py:\n   ```python\n   # Create a temporary directory for file uploads\n   UPLOAD_FOLDER = tempfile.mkdtemp()\n   app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER\n   app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max upload size\n   ALLOWED_EXTENSIONS = {'pdf'}\n   \n   def allowed_file(filename):\n       return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS\n   ```\n3. Create a route for file uploads in app.py:\n   ```python\n   @app.route('/upload', methods=['POST'])\n   def upload_file():\n       # Check if the post request has the file part\n       if 'file' not in request.files:\n           return redirect(request.url)\n       file = request.files['file']\n       # If user does not select file, browser also\n       # submit an empty part without filename\n       if file.filename == '':\n           return redirect(request.url)\n       if file and allowed_file(file.filename):\n           filename = secure_filename(file.filename)\n           filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)\n           file.save(filepath)\n           return redirect(url_for('index'))\n   ```\n4. Update the index.html template to include a file upload form"
+        },
+        {
+          "id": 3,
+          "title": "Implement error handling and logging",
+          "description": "Set up comprehensive error handling and logging for the application",
+          "status": "done",
+          "dependencies": [
+            1,
+            2
+          ],
+          "details": "1. Import logging module in app.py:\n   ```python\n   import logging\n   from logging.handlers import RotatingFileHandler\n   ```\n2. Configure error handling and custom error pages:\n   ```python\n   @app.errorhandler(404)\n   def page_not_found(e):\n       return render_template('404.html'), 404\n   \n   @app.errorhandler(413)\n   def request_entity_too_large(e):\n       return render_template('413.html', max_size='16MB'), 413\n   \n   @app.errorhandler(500)\n   def internal_server_error(e):\n       return render_template('500.html'), 500\n   ```\n3. Set up application logging:\n   ```python\n   if not app.debug:\n       # Create logs directory if it doesn't exist\n       if not os.path.exists('logs'):\n           os.mkdir('logs')\n       # Set up file handler for logging\n       file_handler = RotatingFileHandler('logs/app.log', maxBytes=10240, backupCount=10)\n       file_handler.setFormatter(logging.Formatter(\n           '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'\n       ))\n       file_handler.setLevel(logging.INFO)\n       app.logger.addHandler(file_handler)\n       app.logger.setLevel(logging.INFO)\n       app.logger.info('Application startup')\n   ```\n4. Create basic error template files in the templates directory (404.html, 413.html, 500.html)\n5. Add cleanup code to remove temporary files when they're no longer needed"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Implement PDF upload functionality",
+      "description": "Create the file upload interface and backend route to handle PDF file uploads and validation.",
+      "status": "done",
+      "dependencies": [
+        1
+      ],
+      "priority": "high",
+      "details": "1. Create index.html template with a file upload form\n2. Style the form with basic CSS\n3. Implement the '/' route to render the upload form\n4. Create '/upload' POST route that:\n   - Validates the uploaded file is a PDF\n   - Saves the file to a temporary location using tempfile\n   - Stores file information in the session\n5. Add basic client-side validation for file type\n6. Implement error handling for invalid uploads",
+      "testStrategy": "Test uploading valid PDF files of various sizes. Verify rejection of non-PDF files. Confirm uploaded files are correctly saved to temporary location and session data is properly stored.",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Create PDF upload frontend interface",
+          "description": "Implement the HTML form for PDF uploads with client-side validation and styling",
+          "status": "done",
+          "dependencies": [],
+          "details": "1. Create index.html template with a file upload form that includes:\n   - File input with 'accept=\"application/pdf\"' attribute\n   - Submit button\n   - Form action pointing to '/upload' with method='POST' and enctype='multipart/form-data'\n2. Add client-side JavaScript validation to check file extension and display error messages\n3. Style the form with CSS to provide visual feedback for valid/invalid selections\n4. Implement the '/' route in the backend to render this template"
+        },
+        {
+          "id": 2,
+          "title": "Implement PDF validation and storage backend",
+          "description": "Create the server-side route to handle PDF uploads with proper validation",
+          "status": "done",
+          "dependencies": [
+            1
+          ],
+          "details": "1. Create '/upload' POST route handler\n2. Implement file validation logic to verify:\n   - File exists in the request\n   - File has PDF MIME type ('application/pdf')\n   - File size is within acceptable limits\n3. Use Python's tempfile module to create a secure temporary location for storing uploaded PDFs\n4. Return appropriate error responses for invalid uploads with status codes and messages"
+        },
+        {
+          "id": 3,
+          "title": "Implement session management for uploaded files",
+          "description": "Store file information in the session and handle the upload workflow",
+          "status": "done",
+          "dependencies": [
+            2
+          ],
+          "details": "1. After successful validation and temporary storage, extract and store key file metadata:\n   - Original filename\n   - Temporary file path\n   - Upload timestamp\n   - File size\n2. Store this information in the user's session\n3. Implement a success response that redirects to the next step in the workflow\n4. Add cleanup logic to remove temporary files when they're no longer needed\n5. Implement error handling for session storage failures"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Develop bookmark parsing functionality",
+      "description": "Implement the core logic to extract and parse bookmarks from uploaded PDF files using PyPDF2.",
+      "status": "done",
+      "dependencies": [
+        2
+      ],
+      "priority": "high",
+      "details": "1. Create a utility function `get_bookmarks_recursive()` that:\n   - Opens the PDF using PyPDF2.PdfReader\n   - Recursively traverses the reader.outline structure\n   - Extracts bookmark titles and corresponding page numbers using reader.get_destination_page_number()\n   - Returns a structured list of bookmarks with titles and page numbers\n2. Handle edge cases such as PDFs without bookmarks\n3. Implement proper error handling for parsing failures\n4. Add logging for debugging purposes",
+      "testStrategy": "Test with various PDFs containing different bookmark structures. Verify correct extraction of bookmark titles and page numbers. Confirm proper handling of PDFs without bookmarks or with corrupted bookmark structures.",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Create basic bookmark extraction function",
+          "description": "Implement the core `get_bookmarks_recursive()` function that extracts bookmark information from PDF files",
+          "status": "done",
+          "dependencies": [],
+          "details": "1. Create a utility function `get_bookmarks_recursive()` that takes a PDF file path as input\n2. Use PyPDF2.PdfReader to open the PDF file\n3. Implement recursive traversal of the reader.outline structure\n4. For each bookmark, extract title and page number using reader.get_destination_page_number()\n5. Return a structured list/dictionary of bookmarks with their hierarchy preserved\n6. Include basic validation to check if the file exists and is a valid PDF"
+        },
+        {
+          "id": 2,
+          "title": "Implement edge case handling",
+          "description": "Extend the bookmark extraction function to handle various edge cases and provide meaningful defaults",
+          "status": "done",
+          "dependencies": [
+            1
+          ],
+          "details": "1. Handle PDFs without bookmarks by returning an empty structure\n2. Handle malformed bookmark structures that might cause traversal errors\n3. Handle bookmarks that point to invalid page numbers\n4. Add validation for empty or corrupted PDF files\n5. Implement fallback behavior when bookmark extraction fails partially\n6. Return appropriate status indicators along with the bookmark data"
+        },
+        {
+          "id": 3,
+          "title": "Add error handling and logging",
+          "description": "Implement comprehensive error handling and logging for the bookmark parsing functionality",
+          "status": "done",
+          "dependencies": [
+            1,
+            2
+          ],
+          "details": "1. Implement try-except blocks around critical operations\n2. Create specific exception types for different failure scenarios\n3. Add detailed logging using Python's logging module\n4. Log entry and exit points of the function\n5. Log details about the PDF structure for debugging purposes\n6. Include performance metrics in logs (time taken to parse)\n7. Ensure errors are properly propagated with meaningful messages\n8. Add documentation with examples of common error scenarios and how they're handled"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Implement bookmark filtering logic",
+      "description": "Create functionality to filter bookmarks based on predefined regex patterns to identify potential split points.",
+      "status": "done",
+      "dependencies": [
+        3
+      ],
+      "priority": "high",
+      "details": "1. Define the three regex patterns specified in the PRD:\n   - `r\"^\\d+\\s+.+\"` (e.g., \"1 Introduction\")\n   - `r\"^\\d+(\\.\\d+)+\\s*.*\"` (e.g., \"1.1 Overview\")\n   - `r\"^(Chapter|Part|Section)\\s+\\w+.*\"` (e.g., \"Chapter 1\")\n2. Create a function that applies these patterns to bookmark titles\n3. Extend the bookmark data structure to include a 'matches_pattern' flag\n4. Modify the '/upload' route to call this filtering function after parsing bookmarks\n5. Add logic to handle cases where no bookmarks match any patterns",
+      "testStrategy": "Test with PDFs containing various bookmark naming conventions. Verify correct identification of bookmarks matching each pattern. Confirm proper handling when no bookmarks match patterns.",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Define regex patterns and create filtering function",
+          "description": "Implement the core filtering logic with predefined regex patterns to identify potential split points in bookmark titles",
+          "status": "done",
+          "dependencies": [],
+          "details": "1. Create a new module `bookmark_filter.py` to contain the filtering logic\n2. Define the three regex patterns as constants:\n   - `NUMBERED_TITLE_PATTERN = r\"^\\d+\\s+.+\"` (e.g., \"1 Introduction\")\n   - `HIERARCHICAL_TITLE_PATTERN = r\"^\\d+(\\.\\d+)+\\s*.*\"` (e.g., \"1.1 Overview\")\n   - `CHAPTER_TITLE_PATTERN = r\"^(Chapter|Part|Section)\\s+\\w+.*\"` (e.g., \"Chapter 1\")\n3. Create a function `matches_any_pattern(title)` that takes a bookmark title and returns a boolean indicating if it matches any pattern\n4. Create a function `filter_bookmarks(bookmarks)` that takes a list of bookmark objects and returns the same list with a new `matches_pattern` boolean property added to each bookmark\n5. Add unit tests to verify the filtering logic works correctly with various bookmark title formats"
+        },
+        {
+          "id": 2,
+          "title": "Extend bookmark data structure and integrate with upload route",
+          "description": "Modify the existing bookmark data structure and integrate the filtering function with the PDF upload process",
+          "status": "done",
+          "dependencies": [
+            1
+          ],
+          "details": "1. Update the bookmark data structure in `models.py` or relevant file to include a `matches_pattern` boolean field with a default value of `False`\n2. Modify the `/upload` route in the main application file to call the `filter_bookmarks()` function after parsing bookmarks from the uploaded PDF\n3. Ensure the updated bookmark objects with pattern matching information are stored in the session or database\n4. Update any relevant data transfer objects or serialization methods to include the new `matches_pattern` field\n5. Add logging to track how many bookmarks matched patterns during processing"
+        },
+        {
+          "id": 3,
+          "title": "Implement fallback logic for no pattern matches",
+          "description": "Add logic to handle cases where no bookmarks match any of the predefined patterns",
+          "status": "done",
+          "dependencies": [
+            2
+          ],
+          "details": "1. After filtering bookmarks, add a check to determine if any bookmarks matched patterns\n2. If no bookmarks matched patterns, implement a fallback strategy:\n   - Add a warning message to be displayed to the user\n   - Consider implementing a secondary filtering approach (e.g., looking for bookmarks with page numbers or certain length characteristics)\n   - Provide an option for users to manually select bookmarks as split points\n3. Update the frontend to display appropriate messaging when no pattern matches are found\n4. Add a configuration option to allow users to disable pattern filtering entirely\n5. Document the fallback behavior in user documentation"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Create bookmark selection interface",
+      "description": "Develop the UI and backend route for displaying filtered bookmarks and allowing users to select split points.",
+      "status": "done",
+      "dependencies": [
+        4
+      ],
+      "priority": "medium",
+      "details": "1. Create select_bookmarks.html template with:\n   - Display of filtered bookmarks as a checklist\n   - Checkboxes for selection\n   - Submit button to proceed with splitting\n2. Implement '/select_bookmarks' GET route that:\n   - Retrieves parsed bookmarks from session\n   - Renders the template with bookmark data\n3. Implement '/select_bookmarks' POST route that:\n   - Receives selected bookmark IDs/page numbers\n   - Stores selections in session for the splitting process\n4. Add basic styling for the selection interface\n5. Include error handling for cases with no bookmarks",
+      "testStrategy": "Verify bookmarks are correctly displayed with checkboxes. Test selection of various combinations of bookmarks. Confirm form submission correctly captures selected bookmarks and stores them in session.",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Create bookmark selection template and styling",
+          "description": "Develop the HTML template for displaying filtered bookmarks with selection checkboxes and apply basic styling",
+          "status": "done",
+          "dependencies": [],
+          "details": "1. Create select_bookmarks.html template with:\n   - Header and page title\n   - Form element with POST method\n   - Table or list to display bookmark information\n   - Checkbox for each bookmark with unique ID\n   - Submit button to proceed with splitting\n   - Cancel button to return to previous page\n2. Add CSS styling for:\n   - Consistent layout and spacing\n   - Checkbox and label alignment\n   - Responsive design for different screen sizes\n   - Visual indication of selected items\n3. Include error message section for displaying when no bookmarks are available"
+        },
+        {
+          "id": 2,
+          "title": "Implement GET route for bookmark selection page",
+          "description": "Create the backend route to retrieve bookmark data and render the selection template",
+          "status": "done",
+          "dependencies": [
+            1
+          ],
+          "details": "1. Create a route handler for GET requests to '/select_bookmarks'\n2. Retrieve parsed bookmarks from the session storage\n3. Check if bookmarks exist and have the expected format\n4. If no bookmarks are found, redirect to appropriate error page or previous step\n5. Organize bookmark data for template rendering (e.g., sorting by page number)\n6. Render the select_bookmarks.html template with the bookmark data\n7. Pass any relevant flash messages or errors to the template"
+        },
+        {
+          "id": 3,
+          "title": "Implement POST route for processing bookmark selections",
+          "description": "Create the backend route to handle user selections and store them for the splitting process",
+          "status": "done",
+          "dependencies": [
+            1,
+            2
+          ],
+          "details": "1. Create a route handler for POST requests to '/select_bookmarks'\n2. Extract selected bookmark IDs/page numbers from form submission\n3. Validate that at least one bookmark is selected\n4. If validation fails, redirect back to selection page with error message\n5. Store the selected bookmarks in the session for use in the splitting process\n6. Implement error handling for unexpected form data\n7. Redirect to the next step in the workflow (likely the actual PDF splitting page)\n8. Ensure proper CSRF protection for the form submission"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Implement PDF splitting logic",
+      "description": "Develop the core functionality to split the uploaded PDF at selected bookmark points using PyPDF2.",
+      "status": "done",
+      "dependencies": [
+        5
+      ],
+      "priority": "high",
+      "details": "1. Create a function that:\n   - Takes the original PDF path and list of selected page numbers as input\n   - Opens the PDF using PyPDF2.PdfReader\n   - Creates a temporary directory for split files\n   - For each split point:\n     * Determine page range (from current split point to next split point or end)\n     * Create a new PdfWriter object\n     * Add pages from the determined range\n     * Save as a new PDF file with appropriate naming\n   - Return paths to all created files\n2. Integrate with the '/select_bookmarks' POST route\n3. Handle edge cases (e.g., selecting first/last page)\n4. Implement error handling for splitting failures",
+      "testStrategy": "Test splitting PDFs of various sizes at different bookmark points. Verify correct page ranges in split files. Confirm handling of edge cases like selecting the first or last bookmark.",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Create core PDF splitting function",
+          "description": "Implement the main function that handles splitting a PDF file at specified page numbers using PyPDF2",
+          "status": "done",
+          "dependencies": [],
+          "details": "1. Create a function `split_pdf(pdf_path, split_points)` that:\n   - Takes the original PDF path and list of selected page numbers as input\n   - Opens the PDF using PyPDF2.PdfReader\n   - Creates a temporary directory for split files using tempfile module\n   - Sorts the split points in ascending order\n   - For each consecutive pair of split points:\n     * Determine page range (from current split point to next split point - 1)\n     * Create a new PdfWriter object\n     * Add pages from the determined range using a loop\n     * Generate an appropriate filename (e.g., 'split_X-Y.pdf')\n     * Save as a new PDF file in the temp directory\n   - Handle the last segment (from last split point to end of document)\n   - Return a list of paths to all created files\n2. Include proper docstrings and type hints\n3. Add basic error handling for file operations"
+        },
+        {
+          "id": 2,
+          "title": "Implement edge case handling and validation",
+          "description": "Enhance the splitting function to handle various edge cases and validate inputs",
+          "status": "done",
+          "dependencies": [
+            1
+          ],
+          "details": "1. Add validation for input parameters:\n   - Check if the PDF file exists and is readable\n   - Verify split points are valid page numbers within the document range\n   - Handle empty split_points list (return original PDF or error)\n2. Implement specific edge case handling:\n   - If first page (0) is not in split points, add it automatically\n   - If last page is not included, ensure the final segment goes to the end\n   - Handle single-page PDFs appropriately\n   - Check for and remove duplicate split points\n3. Add comprehensive error handling with specific exception types:\n   - FileNotFoundError for missing PDFs\n   - PermissionError for access issues\n   - PyPDF2-specific exceptions\n   - Custom exceptions for invalid split points\n4. Add logging for debugging purposes"
+        },
+        {
+          "id": 3,
+          "title": "Integrate PDF splitting with web routes",
+          "description": "Connect the PDF splitting functionality to the web application's routes and UI",
+          "status": "done",
+          "dependencies": [
+            1,
+            2
+          ],
+          "details": "1. Modify the '/select_bookmarks' POST route to:\n   - Extract selected bookmark page numbers from form data\n   - Retrieve the path of the previously uploaded PDF\n   - Call the split_pdf function with appropriate parameters\n   - Store the paths of split PDFs in the session\n   - Handle errors and provide appropriate user feedback\n2. Create a new route '/download_split/<index>' that:\n   - Retrieves the specified split PDF path from session data\n   - Serves the file as a download with appropriate headers\n   - Handles missing files gracefully\n3. Add cleanup functionality to remove temporary files after download or session expiration\n4. Update the UI templates to show splitting results and download options"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Develop ZIP creation and download functionality",
+      "description": "Create functionality to zip all split PDF files and provide a download mechanism for the user.",
+      "status": "done",
+      "dependencies": [
+        6
+      ],
+      "priority": "medium",
+      "details": "1. Create a function that:\n   - Takes a list of split PDF file paths\n   - Creates a ZIP file in a temporary location\n   - Adds all split PDFs to the ZIP file with appropriate names\n   - Returns the path to the created ZIP file\n2. Implement '/download/<filename>' route using Flask's send_file\n3. Modify the splitting process to trigger ZIP creation\n4. Generate a unique filename for the ZIP file\n5. Add appropriate headers for file download\n6. Implement error handling for ZIP creation failures",
+      "testStrategy": "Test ZIP creation with various numbers and sizes of split PDFs. Verify all files are correctly included in the ZIP. Confirm download works correctly in different browsers.",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Create ZIP file generation function",
+          "description": "Implement a utility function that takes a list of PDF file paths and creates a ZIP archive containing all files",
+          "status": "done",
+          "dependencies": [],
+          "details": "1. Create a new utility function `create_zip_from_pdfs(pdf_files)` that:\n   - Takes a list of PDF file paths as input\n   - Creates a temporary ZIP file using Python's zipfile module\n   - Adds each PDF to the ZIP with appropriate naming\n   - Handles file paths correctly, preserving only the filename in the ZIP\n   - Returns the path to the created ZIP file\n2. Generate a unique filename for the ZIP using timestamp and random string\n3. Implement error handling for file access and ZIP creation failures\n4. Add logging for debugging purposes"
+        },
+        {
+          "id": 2,
+          "title": "Implement download route in Flask",
+          "description": "Create a Flask route that allows users to download the generated ZIP file",
+          "status": "done",
+          "dependencies": [
+            1
+          ],
+          "details": "1. Implement a new route '/download/<filename>' in the Flask application\n2. Use Flask's send_file function to serve the ZIP file\n3. Set appropriate HTTP headers for file download:\n   - Content-Type: application/zip\n   - Content-Disposition: attachment; filename=...\n4. Add error handling for cases where the requested file doesn't exist\n5. Implement cleanup logic to remove temporary files after download"
+        },
+        {
+          "id": 3,
+          "title": "Integrate ZIP creation with PDF splitting workflow",
+          "description": "Modify the existing PDF splitting functionality to create a ZIP file and provide download link",
+          "status": "done",
+          "dependencies": [
+            1,
+            2
+          ],
+          "details": "1. Update the PDF splitting route to call the ZIP creation function after all PDFs are generated\n2. Store the ZIP file path in the session or a temporary database\n3. Modify the frontend to display a download button/link after splitting is complete\n4. Pass the ZIP filename to the frontend for constructing the download URL\n5. Add appropriate error handling and user feedback\n6. Ensure temporary files are managed properly (both split PDFs and ZIP file)"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Implement temporary file cleanup",
+      "description": "Create mechanisms to clean up temporary files (uploaded PDFs, split PDFs, and ZIP files) after processing or on errors.",
+      "status": "done",
+      "dependencies": [
+        7
+      ],
+      "priority": "medium",
+      "details": "1. Implement cleanup function using tempfile.TemporaryDirectory for managing file lifecycle\n2. Add Flask's after_this_request decorator to clean up files after download\n3. Implement error handlers that ensure cleanup on exceptions\n4. Add cleanup for abandoned uploads (optional for MVP)\n5. Ensure proper handling of file permissions during cleanup\n6. Add logging for cleanup operations",
+      "testStrategy": "Verify temporary files are correctly removed after successful download. Confirm cleanup occurs after errors or exceptions. Check for any file permission issues during cleanup.",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Implement core file cleanup mechanism",
+          "description": "Create a central cleanup utility that manages temporary file lifecycle using tempfile.TemporaryDirectory and handles proper file permissions during deletion.",
+          "status": "done",
+          "dependencies": [],
+          "details": "Create a utility module (e.g., file_cleanup.py) with functions to: 1) Create temporary directories using tempfile.TemporaryDirectory, 2) Track created files with their paths and contexts, 3) Implement safe deletion with proper error handling for permission issues, 4) Add logging for cleanup operations. The module should expose functions like create_temp_dir(), register_temp_file(), and cleanup_files() that other parts of the application can use."
+        },
+        {
+          "id": 2,
+          "title": "Implement request-based cleanup with decorators",
+          "description": "Add Flask's after_this_request decorator to ensure temporary files are cleaned up after response delivery, and implement error handlers for exception cases.",
+          "status": "done",
+          "dependencies": [
+            1
+          ],
+          "details": "Create decorator functions that utilize the core cleanup mechanism from subtask 1. Implement: 1) A function that uses Flask's after_this_request to register cleanup callbacks, 2) Error handlers that catch exceptions and ensure cleanup runs, 3) Integration with Flask's error handling system. These decorators should be applicable to route functions that create temporary files, ensuring cleanup happens regardless of success or failure."
+        },
+        {
+          "id": 3,
+          "title": "Implement abandoned file cleanup",
+          "description": "Create a mechanism to identify and clean up temporary files that were created but never processed or downloaded.",
+          "status": "done",
+          "dependencies": [
+            1,
+            2
+          ],
+          "details": "Build on the previous subtasks to implement: 1) A tracking system that records creation time of temporary files, 2) A background task or scheduled job that periodically checks for abandoned files based on age, 3) Configuration options for retention periods (how long to keep files before considering them abandoned), 4) Integration with the logging system to record cleanup of abandoned files. This can be implemented using a simple scheduled task or a more robust solution like Celery depending on application requirements."
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Enhance error handling and user feedback",
+      "description": "Improve error handling throughout the application and provide clear feedback to users for various scenarios.",
+      "status": "done",
+      "dependencies": [
+        8
+      ],
+      "priority": "low",
+      "details": "1. Create error templates for common error scenarios:\n   - No bookmarks found in PDF\n   - No bookmarks matching patterns\n   - PDF parsing errors\n   - File size exceeded\n   - Server-side processing errors\n2. Implement Flash messages for user feedback\n3. Add client-side validation with helpful error messages\n4. Enhance server-side error logging\n5. Create a consistent error handling approach across all routes",
+      "testStrategy": "Test various error scenarios to verify appropriate error messages are displayed. Confirm logs contain useful information for debugging. Verify user experience during error conditions is informative and non-confusing.",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Implement client-side validation and error templates",
+          "description": "Create client-side validation for form inputs and develop reusable error templates for common error scenarios",
+          "status": "done",
+          "dependencies": [],
+          "details": "1. Add client-side validation to all form inputs using JavaScript/jQuery\n2. Create error message templates for common scenarios:\n   - No bookmarks found in PDF\n   - No bookmarks matching patterns\n   - PDF parsing errors\n   - File size exceeded\n   - Invalid file format\n3. Design consistent error message styling with clear visual indicators\n4. Ensure error messages are accessible and follow WCAG guidelines\n5. Implement client-side error handling for AJAX requests"
+        },
+        {
+          "id": 2,
+          "title": "Enhance server-side error handling and logging",
+          "description": "Implement robust server-side error handling with proper logging and standardized error responses",
+          "status": "done",
+          "dependencies": [
+            1
+          ],
+          "details": "1. Create a centralized error handling middleware for Express routes\n2. Implement structured error logging with severity levels (info, warning, error)\n3. Set up error categorization (validation errors, processing errors, system errors)\n4. Configure proper HTTP status codes for different error types\n5. Implement try-catch blocks in all asynchronous operations\n6. Create utility functions for common error handling patterns\n7. Set up error monitoring for critical failures"
+        },
+        {
+          "id": 3,
+          "title": "Implement user feedback system with Flash messages",
+          "description": "Create a comprehensive user feedback system using Flash messages for both success and error states",
+          "status": "done",
+          "dependencies": [
+            1,
+            2
+          ],
+          "details": "1. Implement Flash message middleware (using connect-flash or similar)\n2. Create message categories (success, info, warning, error)\n3. Design Flash message UI components with appropriate styling\n4. Add Flash messages to all user actions (file upload, processing, download)\n5. Ensure Flash messages persist appropriately across redirects\n6. Implement automatic dismissal of messages after a set time period\n7. Add the ability for users to manually dismiss messages\n8. Ensure Flash messages are accessible with proper ARIA attributes"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Perform integration testing and finalize MVP",
+      "description": "Integrate all components, perform end-to-end testing, and prepare the application for deployment.",
+      "status": "done",
+      "dependencies": [
+        9
+      ],
+      "priority": "low",
+      "details": "1. Perform end-to-end testing of the complete workflow:\n   - File upload\n   - Bookmark parsing and filtering\n   - Bookmark selection\n   - PDF splitting\n   - ZIP creation and download\n   - Temporary file cleanup\n2. Test with various PDF types and sizes\n3. Optimize performance where possible\n4. Review code for security issues\n5. Finalize documentation\n6. Prepare deployment instructions\n7. Create a requirements.txt file",
+      "testStrategy": "Conduct full end-to-end testing with various PDFs. Verify all components work together correctly. Test edge cases and error scenarios. Confirm resource usage is reasonable and performance is acceptable for the MVP.",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Implement comprehensive end-to-end testing suite",
+          "description": "Create and execute a testing suite that validates the complete application workflow from file upload to ZIP download, with various PDF types and sizes.",
+          "status": "done",
+          "dependencies": [],
+          "details": "1. Create test cases covering the full workflow: file upload, bookmark parsing/filtering, bookmark selection, PDF splitting, ZIP creation/download, and temp file cleanup\n2. Implement tests for edge cases: large PDFs (>100MB), PDFs with complex bookmark structures, PDFs with no bookmarks\n3. Test with at least 5 different PDF types (academic papers, books, reports, etc.)\n4. Document all test cases and results in a testing report\n5. Fix any bugs or issues discovered during testing"
+        },
+        {
+          "id": 2,
+          "title": "Optimize application performance and security",
+          "description": "Review and enhance the application's performance and security based on testing results, focusing on resource usage, response times, and potential vulnerabilities.",
+          "status": "done",
+          "dependencies": [
+            1
+          ],
+          "details": "1. Profile the application to identify performance bottlenecks, especially in PDF processing and ZIP creation\n2. Implement caching strategies where appropriate to improve response times\n3. Optimize file handling to reduce memory usage during large file processing\n4. Conduct a security review focusing on: file upload validation, temporary file handling, user input sanitization\n5. Implement rate limiting for API endpoints\n6. Add proper error handling and logging throughout the application\n7. Document all optimizations and security measures implemented"
+        },
+        {
+          "id": 3,
+          "title": "Prepare deployment package and documentation",
+          "description": "Finalize all documentation and prepare the application for deployment with clear instructions and configuration files.",
+          "status": "done",
+          "dependencies": [
+            2
+          ],
+          "details": "1. Create a comprehensive requirements.txt file with all dependencies and version numbers\n2. Write detailed deployment instructions for different environments (local, staging, production)\n3. Document environment variables and configuration options\n4. Create user documentation explaining how to use the application\n5. Prepare developer documentation including architecture overview and API documentation\n6. Create a README.md with quick start guide\n7. Package the application for deployment (Docker container or deployment scripts)\n8. Document any known limitations or future improvements"
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "projectName": "PDF Bookmark Splitter Implementation",
+    "totalTasks": 10,
+    "sourceFile": "scripts/prd.txt",
+    "generatedAt": "2023-11-09"
+  }
+}

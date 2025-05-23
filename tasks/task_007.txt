@@ -1,0 +1,59 @@
+# Task ID: 7
+# Title: Develop ZIP creation and download functionality
+# Status: done
+# Dependencies: 6
+# Priority: medium
+# Description: Create functionality to zip all split PDF files and provide a download mechanism for the user.
+# Details:
+1. Create a function that:
+   - Takes a list of split PDF file paths
+   - Creates a ZIP file in a temporary location
+   - Adds all split PDFs to the ZIP file with appropriate names
+   - Returns the path to the created ZIP file
+2. Implement '/download/<filename>' route using Flask's send_file
+3. Modify the splitting process to trigger ZIP creation
+4. Generate a unique filename for the ZIP file
+5. Add appropriate headers for file download
+6. Implement error handling for ZIP creation failures
+
+# Test Strategy:
+Test ZIP creation with various numbers and sizes of split PDFs. Verify all files are correctly included in the ZIP. Confirm download works correctly in different browsers.
+
+# Subtasks:
+## 1. Create ZIP file generation function [done]
+### Dependencies: None
+### Description: Implement a utility function that takes a list of PDF file paths and creates a ZIP archive containing all files
+### Details:
+1. Create a new utility function `create_zip_from_pdfs(pdf_files)` that:
+   - Takes a list of PDF file paths as input
+   - Creates a temporary ZIP file using Python's zipfile module
+   - Adds each PDF to the ZIP with appropriate naming
+   - Handles file paths correctly, preserving only the filename in the ZIP
+   - Returns the path to the created ZIP file
+2. Generate a unique filename for the ZIP using timestamp and random string
+3. Implement error handling for file access and ZIP creation failures
+4. Add logging for debugging purposes
+
+## 2. Implement download route in Flask [done]
+### Dependencies: 7.1
+### Description: Create a Flask route that allows users to download the generated ZIP file
+### Details:
+1. Implement a new route '/download/<filename>' in the Flask application
+2. Use Flask's send_file function to serve the ZIP file
+3. Set appropriate HTTP headers for file download:
+   - Content-Type: application/zip
+   - Content-Disposition: attachment; filename=...
+4. Add error handling for cases where the requested file doesn't exist
+5. Implement cleanup logic to remove temporary files after download
+
+## 3. Integrate ZIP creation with PDF splitting workflow [done]
+### Dependencies: 7.1, 7.2
+### Description: Modify the existing PDF splitting functionality to create a ZIP file and provide download link
+### Details:
+1. Update the PDF splitting route to call the ZIP creation function after all PDFs are generated
+2. Store the ZIP file path in the session or a temporary database
+3. Modify the frontend to display a download button/link after splitting is complete
+4. Pass the ZIP filename to the frontend for constructing the download URL
+5. Add appropriate error handling and user feedback
+6. Ensure temporary files are managed properly (both split PDFs and ZIP file)
+

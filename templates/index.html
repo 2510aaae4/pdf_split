@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF 分割工具</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>PDF 分割工具</h1>
+            <p>根據書籤結構將 PDF 檔案分割成多個較小的檔案</p>
+        </header>
+        
+        <!-- Flash 訊息顯示區域 -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message flash-{{ category }}">
+                            <span class="flash-text">{{ message }}</span>
+                            <button type="button" class="flash-close" onclick="this.parentElement.remove()">&times;</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        <main>
+            <div class="upload-section">
+                <h2>上傳 PDF 檔案</h2>
+                <p>請選擇您要分割的 PDF 檔案（最大檔案大小：500MB）</p>
+                
+                <!-- PDF 上傳表單 -->
+                <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data" class="upload-form">
+                    <div class="file-input-container">
+                        <input type="file" id="file" name="file" accept="application/pdf" required class="file-input">
+                        <label for="file" class="file-label">
+                            <span class="file-icon">📄</span>
+                            <span class="file-text">點擊選擇 PDF 檔案</span>
+                        </label>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-upload">
+                            <span class="btn-icon">📤</span>
+                            上傳並處理
+                        </button>
+                    </div>
+                    
+                    <div class="upload-info">
+                        <p class="info-text">
+                            <strong>支援格式：</strong> PDF 檔案 <br>
+                            <strong>檔案大小限制：</strong> 最大 500MB <br>
+                            <strong>功能：</strong> 自動解析書籤並提供分割選項
+                        </p>
+                    </div>
+                </form>
+            </div>
+        </main>
+        
+        <footer>
+            <p>&copy; 2024 PDF 分割工具</p>
+        </footer>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html> 
