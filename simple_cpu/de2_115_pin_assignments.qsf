@@ -1,0 +1,62 @@
+# Pin assignments for Cyclone IV E EP4CE115F29C7 (Terasic DE2-115)
+# Map simple CPU ports to board peripherals.
+
+# Clock (50 MHz oscillator)
+set_location_assignment PIN_AF14 -to clk
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to clk
+
+# Push buttons
+set_location_assignment PIN_AJ4 -to reset  # KEY0
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to reset
+set_location_assignment PIN_AH4 -to start  # KEY1
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to start
+
+# Instruction bits from switches (SW0..SW15)
+set_location_assignment PIN_Y24  -to instr[0]
+set_location_assignment PIN_W24  -to instr[1]
+set_location_assignment PIN_V24  -to instr[2]
+set_location_assignment PIN_U24  -to instr[3]
+set_location_assignment PIN_T24  -to instr[4]
+set_location_assignment PIN_R24  -to instr[5]
+set_location_assignment PIN_Y23  -to instr[6]
+set_location_assignment PIN_W22  -to instr[7]
+set_location_assignment PIN_V22  -to instr[8]
+set_location_assignment PIN_U22  -to instr[9]
+set_location_assignment PIN_T22  -to instr[10]
+set_location_assignment PIN_R22  -to instr[11]
+set_location_assignment PIN_Y21  -to instr[12]
+set_location_assignment PIN_W21  -to instr[13]
+set_location_assignment PIN_V21  -to instr[14]
+set_location_assignment PIN_U21  -to instr[15]
+
+# Seven segment displays
+# seg_rs -> HEX0
+set_location_assignment PIN_AF10 -to seg_rs[0]
+set_location_assignment PIN_AG10 -to seg_rs[1]
+set_location_assignment PIN_AD10 -to seg_rs[2]
+set_location_assignment PIN_AC10 -to seg_rs[3]
+set_location_assignment PIN_AB10 -to seg_rs[4]
+set_location_assignment PIN_AF11 -to seg_rs[5]
+set_location_assignment PIN_AD11 -to seg_rs[6]
+
+# seg_rt -> HEX1
+set_location_assignment PIN_AF12 -to seg_rt[0]
+set_location_assignment PIN_AG12 -to seg_rt[1]
+set_location_assignment PIN_AD12 -to seg_rt[2]
+set_location_assignment PIN_AC12 -to seg_rt[3]
+set_location_assignment PIN_AB12 -to seg_rt[4]
+set_location_assignment PIN_AF13 -to seg_rt[5]
+set_location_assignment PIN_AD13 -to seg_rt[6]
+
+# seg_bus -> HEX2
+set_location_assignment PIN_AF15 -to seg_bus[0]
+set_location_assignment PIN_AG15 -to seg_bus[1]
+set_location_assignment PIN_AD15 -to seg_bus[2]
+set_location_assignment PIN_AC15 -to seg_bus[3]
+set_location_assignment PIN_AB15 -to seg_bus[4]
+set_location_assignment PIN_AF16 -to seg_bus[5]
+set_location_assignment PIN_AD16 -to seg_bus[6]
+
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to seg_rs[*]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to seg_rt[*]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to seg_bus[*]
